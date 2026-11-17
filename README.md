@@ -21,7 +21,29 @@
   จำนวนประกาศต่อหน้า, เปิด/ปิดการแสดงราคา
 - จัดการบัญชีผู้ดูแล: เปลี่ยนรหัสผ่าน, เพิ่ม/ลบผู้ดูแล
 
-## วิธีติดตั้งและรัน
+## เวอร์ชัน GitHub Pages (ฟรี ไม่ต้องมีเซิร์ฟเวอร์) — โฟลเดอร์ `docs/`
+
+เว็บแบบเดียวกับที่ใช้ GitHub Pages ฟรี ข้อมูลประกาศเก็บใน `docs/data/site.json` และรูปใน `docs/uploads/`
+
+- หน้าเว็บ: `https://<ชื่อบัญชี>.github.io/Brokers-Land/`
+- หน้าผู้ดูแล: `https://<ชื่อบัญชี>.github.io/Brokers-Land/admin.html`
+
+**เปิดใช้งาน**
+1. ไฟล์ต้องอยู่บน branch `main` (หรือแก้ `branch` ใน `docs/config.js` ให้ตรงกับ branch ที่ใช้)
+2. GitHub → repository → **Settings → Pages** → Source: *Deploy from a branch* → Branch: `main` โฟลเดอร์ `/docs` → Save
+3. รอ 1–2 นาที แล้วเปิดลิงก์หน้าเว็บ
+
+**เข้าหน้าผู้ดูแล** ต้องใช้ GitHub Token (ทำครั้งเดียว)
+1. เปิด https://github.com/settings/personal-access-tokens/new
+2. Repository access → *Only select repositories* → `Brokers-Land`
+3. Permissions → Repository permissions → **Contents: Read and write**
+4. Generate token แล้วนำไปวางในหน้า `admin.html`
+
+ทุกครั้งที่กดบันทึก ระบบจะ commit ข้อมูลและรูปลง GitHub และหน้าเว็บจะอัปเดตภายใน 1–2 นาที
+
+ข้อจำกัด: เป็นเว็บแบบ static จึงไม่มีฟอร์มส่งข้อความเก็บในระบบ (ใส่ลิงก์ Google Form ได้ในหน้าตั้งค่า)
+
+## เวอร์ชัน Node.js (มีเซิร์ฟเวอร์) — วิธีติดตั้งและรัน
 
 ต้องใช้ Node.js เวอร์ชัน 22.13 ขึ้นไป (ใช้ SQLite ที่มีในตัว Node ไม่ต้องติดตั้งฐานข้อมูลแยก)
 
