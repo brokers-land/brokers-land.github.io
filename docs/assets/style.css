@@ -2,40 +2,28 @@ html { scroll-padding-top: 80px; }
 body { margin: 0; }
 img { max-width: 100%; }
 [hidden] { display: none !important; }
-/* Layout: survey sheet — a contour-lined hero over a plot grid; every listing reads like a deed summary (ไร่-งาน-ตร.ว.) */
+/* Theme: white + blue. Layout: survey sheet — a contour-lined hero over a plot grid; every listing reads like a deed summary (ไร่-งาน-ตร.ว.) */
 :root {
-  --paper: #f5f7f2;
+  --paper: #f3f7fc;
   --sheet: #ffffff;
-  --ink: #18241c;
-  --ink-2: #4d5c52;
-  --line: #dde4dc;
-  --field: #2b6a45;
+  --ink: #0f2440;
+  --ink-2: #4b5f7a;
+  --line: #dbe4f0;
+  --field: #1a6ad4;
   --field-ink: #ffffff;
-  --field-soft: #e4efe7;
-  --ochre: #9a6614;
-  --ok: #23824f;
-  --hold: #b06d0b;
-  --sold: #a3392d;
-  --contour: rgba(255,255,255,.13);
-  --shadow: 0 1px 2px rgba(24,36,28,.06), 0 6px 20px rgba(24,36,28,.06);
+  --field-soft: #e7f0fc;
+  --ochre: #2c62a8;
+  --ok: #1f8a55;
+  --hold: #c27a0e;
+  --sold: #c0392b;
+  --contour: rgba(255,255,255,.16);
+  --hero: linear-gradient(135deg, #0f4fa8 0%, #1a6ad4 55%, #3b8ff0 100%);
+  --shadow: 0 1px 2px rgba(15,36,64,.05), 0 8px 24px rgba(26,106,212,.08);
   --f-display: 'Anuphan', 'IBM Plex Sans Thai', system-ui, sans-serif;
   --f-body: 'IBM Plex Sans Thai', 'Anuphan', system-ui, sans-serif;
   --f-mono: 'IBM Plex Mono', ui-monospace, monospace;
   --r: 12px;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --paper: #101612; --sheet: #172019; --ink: #e5ece6; --ink-2: #a3b2a7; --line: #2a362d;
-    --field: #4fa673; --field-ink: #0d1510; --field-soft: #1d3125; --ochre: #e0a94f;
-    --ok: #5cc28a; --hold: #e8a03a; --sold: #e27565; --contour: rgba(0,0,0,.18);
-    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.25); color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --paper: #101612; --sheet: #172019; --ink: #e5ece6; --ink-2: #a3b2a7; --line: #2a362d;
-  --field: #4fa673; --field-ink: #0d1510; --field-soft: #1d3125; --ochre: #e0a94f;
-  --ok: #5cc28a; --hold: #e8a03a; --sold: #e27565; --contour: rgba(0,0,0,.18);
-  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.25); color-scheme: dark;
+  color-scheme: light;
 }
 * { box-sizing: border-box; }
 body { background: var(--paper); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.65; }
@@ -66,7 +54,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .btn[disabled] { opacity: .55; cursor: progress; }
 
 /* hero */
-.hero { background: var(--field); color: var(--field-ink); position: relative; overflow: hidden; }
+.hero { background: var(--hero); color: var(--field-ink); position: relative; overflow: hidden; }
 .hero canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .hero .wrap { position: relative; padding-block: 48px 40px; }
 .hero h1 { font-size: clamp(1.7rem, 4vw, 2.6rem); max-width: 20ch; }
@@ -144,9 +132,9 @@ footer p { margin: 6px 0 0; color: var(--ink-2); max-width: 60ch; }
 footer ul { list-style: none; padding: 0; margin: 6px 0 0; color: var(--ink-2); }
 
 /* admin */
-.adminbar { background: var(--ink); color: var(--paper); font-size: .9rem; }
+.adminbar { background: var(--ink); color: #ffffff; font-size: .9rem; }
 .adminbar .wrap { display: flex; gap: 12px; align-items: center; padding-block: 6px; flex-wrap: wrap; }
-.adminbar .btn { background: var(--paper); color: var(--ink); border-color: var(--paper); }
+.adminbar .btn { background: #ffffff; color: var(--ink); border-color: #ffffff; }
 .tabs { display: flex; gap: 6px; padding-block: 20px 16px; flex-wrap: wrap; align-items: center; }
 .tabs button[aria-pressed="true"] { background: var(--field); color: var(--field-ink); }
 .tabs .meter { margin-left: auto; font-size: .85rem; color: var(--ink-2); }
