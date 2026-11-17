@@ -161,9 +161,28 @@
   window.addEventListener('hashchange', function () { render(); window.scrollTo(0, 0); });
   window.addEventListener('resize', function () { if (route().view === 'home') drawContours(); });
 
+  // โหลดข้อมูลล่าสุด และโหลดใหม่ทุกครั้งที่กลับมาดูหน้านี้ (ราคา/สถานะที่ admin แก้จะขึ้นทันที)
+  var lastJson = '', loading = false;
+  function load(first) {
+    if (loading) return; loading = true;
+    fetch('data/site.json?v=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+      .then(function (text) {
+        loading = false;
+        if (text === lastJson) return;
+        var data = JSON.parse(text);
+        lastJson = text; STATE = data; S = data.settings;
+        if (first) { render(); return; }
+        var y = window.scrollY, r = document.getElementById('results');
+        if (route().view === 'home' && r) r.innerHTML = resultsHtml(); else render();
+        window.scrollTo(0, y);
+      })
+      .catch(function () { loading = false; if (first) app.innerHTML = '<div class="loading">โหลดข้อมูลไม่สำเร็จ กรุณารีเฟรชหน้าอีกครั้ง</div>'; });
+  }
   app.innerHTML = '<div class="loading">กำลังโหลดประกาศ…</div>';
-  fetch('data/site.json?v=' + Date.now(), { cache: 'no-store' })
-    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-    .then(function (data) { STATE = data; S = data.settings; render(); })
-    .catch(function () { app.innerHTML = '<div class="loading">โหลดข้อมูลไม่สำเร็จ กรุณารีเฟรชหน้าอีกครั้ง</div>'; });
+  load(true);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible' && STATE) load(false); });
+  window.addEventListener('pageshow', function (e) { if (e.persisted && STATE) load(false); });
+  window.addEventListener('focus', function () { if (STATE) load(false); });
+  setInterval(function () { if (STATE && document.visibilityState === 'visible') load(false); }, 60000);
 })();

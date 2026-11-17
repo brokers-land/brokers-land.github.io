@@ -78,7 +78,30 @@
     return s;
   }
 
+  // หลังบันทึก: เช็กหน้าเว็บจริงจนกว่าจะเห็นข้อมูลชุดใหม่ แล้วแจ้ง admin
+  var watchTimer = null;
+  function setLive(state, text) {
+    var el = document.getElementById('live');
+    ui.live = { state: state, text: text };
+    if (el) { el.className = 'note' + (state === 'err' ? ' err' : ''); el.textContent = text; el.hidden = !text; }
+  }
+  function watchLive(rev) {
+    clearTimeout(watchTimer);
+    var started = Date.now();
+    setLive('wait', 'กำลังอัปเดตหน้าเว็บ… (ปกติ 1–2 นาที)');
+    (function check() {
+      fetch('data/site.json?v=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
+        if (d.rev === rev) { setLive('ok', '✓ หน้าเว็บอัปเดตแล้ว ลูกค้าเห็นข้อมูลใหม่แล้ว'); B.toast('หน้าเว็บอัปเดตแล้ว'); watchTimer = setTimeout(function () { setLive('', ''); }, 15000); return; }
+        throw new Error('old');
+      }).catch(function () {
+        if (Date.now() - started > 6 * 60 * 1000) { setLive('err', 'หน้าเว็บยังไม่อัปเดต ลองรีเฟรชหน้าเว็บอีกครั้งในอีกสักครู่'); return; }
+        watchTimer = setTimeout(check, 6000);
+      });
+    })();
+  }
+
   function save(next, msg, commitMsg) {
+    next.rev = Date.now();
     // รูปใหม่ (ยังเป็น data URL) → แปลงเป็นไฟล์ใน uploads/
     var newImages = [];
     next.lands.forEach(function (l) {
@@ -92,7 +115,8 @@
     ui.busy = true; ui.error = ''; render();
     return commit(next, newImages, removed, commitMsg || msg).then(function () {
       ui.busy = false; ui.edit = false; ui.draft = null; render(); window.scrollTo(0, 0);
-      B.toast(msg + ' · หน้าเว็บจะอัปเดตภายใน 1–2 นาที');
+      B.toast(msg);
+      watchLive(next.rev);
     }, function (err) {
       ui.busy = false;
       if (err.conflict) ui.error = 'มีการแก้ไขข้อมูลจากที่อื่นก่อนหน้านี้ กด "โหลดข้อมูลล่าสุด" แล้วแก้ไขอีกครั้ง';
@@ -147,7 +171,9 @@
 
   function render() {
     if (!token || !STATE) { app.innerHTML = page(loginPage('')); return; }
+    var lv = ui.live || {};
     var body = '<section class="wrap">' +
+      '<div id="live" class="note' + (lv.state === 'err' ? ' err' : '') + '" style="margin-top:16px"' + (lv.text ? '' : ' hidden') + '>' + esc(lv.text || '') + '</div>' +
       (ui.error ? '<div class="note err" style="margin-top:16px">' + esc(ui.error) + '</div>' : '') +
       '<div class="tabs"><button class="btn ghost" data-tab="lands" aria-pressed="' + (ui.tab === 'lands') + '">ประกาศที่ดิน</button>' +
       '<button class="btn ghost" data-tab="site" aria-pressed="' + (ui.tab === 'site') + '">ตั้งค่าเว็บไซต์</button>' +
