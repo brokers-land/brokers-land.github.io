@@ -13,7 +13,7 @@
   "showPrice": true,
   "formUrl": ""
  },
- "nextId": 4,
+ "nextId": 5,
  "lands": [
   {
    "id": 1,
@@ -86,6 +86,30 @@
    "lng": 100.41,
    "status": "reserved",
    "featured": false,
+   "published": true,
+   "images": [],
+   "updated": "2026-11-17"
+  },
+  {
+   "id": 4,
+   "title": "บ้าน",
+   "type": "ที่ดินเปล่า",
+   "deed": "โฉนด (น.ส.4จ.)",
+   "province": "ลพบุรี",
+   "district": "บ้านข่อย",
+   "subdistrict": "เมือง",
+   "address": "150",
+   "rai": 5,
+   "ngan": 0,
+   "wa": 0,
+   "price": 2500000,
+   "road": "",
+   "utilities": "",
+   "desc": "",
+   "lat": "",
+   "lng": "",
+   "status": "available",
+   "featured": true,
    "published": true,
    "images": [],
    "updated": "2026-11-17"
