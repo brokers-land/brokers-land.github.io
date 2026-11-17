@@ -13,6 +13,7 @@
 </head>
 <body style="font-family:sans-serif;text-align:center;padding:48px 16px">
   <p>ไม่พบหน้านี้</p>
-  <p><a href="/Brokers-Land/docs/">กลับหน้าแรก</a></p>
+  <p><a id="home" href="/">กลับหน้าแรก</a></p>
+  <script>var p = location.pathname.split('/')[1]; if (p && location.hostname.slice(-10) === '.github.io') document.getElementById('home').href = '/' + p + '/docs/';</script>
 </body>
 </html>
