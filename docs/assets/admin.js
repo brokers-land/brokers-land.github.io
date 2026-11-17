@@ -144,6 +144,7 @@
     bolt: '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>',
     ext: '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M6 3H3v10h10v-3M9 2h5v5M14 2L7 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'
   };
+  var pubLands = [];
   var pub = null; // ชื่อเว็บจากหน้าเว็บจริง (ใช้แสดงในหน้าเข้าสู่ระบบ)
 
   function loginPage(err) {
@@ -203,21 +204,85 @@
   }
   window.addEventListener('resize', drawAuthContours);
   fetch('data/site.json?v=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
-    pub = d.settings; if (!STATE && document.getElementById('loginform') && !ui.loginBusy) render();
+    pub = d.settings; pubLands = d.lands || []; if (!STATE && document.getElementById('loginform') && !ui.loginBusy) render();
   }).catch(function () {});
 
+
+  // ---------- หน้าโหลดหลังเข้าสู่ระบบ: ผังแปลงบนคลื่นเส้นแผนที่ ----------
+  var boot = null;
+  var REDUCE = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function bootShow() {
+    if (boot) return;
+    var newest = pubLands.filter(function (l) { return l.published; }).sort(function (a, b) { return b.id - a.id; })[0];
+    var label = newest ? B.deedNotation(newest) : '2-1-50';
+    var el = document.createElement('div');
+    el.className = 'boot play'; el.setAttribute('role', 'status'); el.setAttribute('aria-live', 'polite');
+    el.innerHTML = '<canvas aria-hidden="true"></canvas>' +
+      '<div class="boot-glass"><svg class="boot-plot" viewBox="0 0 200 140" aria-hidden="true">' +
+      '<g class="g"><line x1="0" y1="35" x2="200" y2="35"/><line x1="0" y1="70" x2="200" y2="70"/><line x1="0" y1="105" x2="200" y2="105"/><line x1="50" y1="0" x2="50" y2="140"/><line x1="100" y1="0" x2="100" y2="140"/><line x1="150" y1="0" x2="150" y2="140"/></g>' +
+      '<polygon class="area" points="30,30 165,18 182,112 40,124"/><polygon class="edge" points="30,30 165,18 182,112 40,124"/>' +
+      '<rect class="pin" x="25" y="25" width="10" height="10" rx="1.5"/><rect class="pin" x="160" y="13" width="10" height="10" rx="1.5"/>' +
+      '<rect class="pin" x="177" y="107" width="10" height="10" rx="1.5"/><rect class="pin" x="35" y="119" width="10" height="10" rx="1.5"/>' +
+      '<text class="t1" x="104" y="74" text-anchor="middle">' + esc(label) + '</text><text class="t2" x="104" y="90" text-anchor="middle">ไร่-งาน-ตร.ว.</text></svg></div>' +
+      '<div class="boot-hello">ยินดีต้อนรับกลับ</div>' +
+      '<div class="boot-bar" aria-hidden="true"><i></i></div>' +
+      '<span class="sr-only">กำลังโหลดข้อมูลประกาศ</span>';
+    document.body.appendChild(el);
+    boot = { el: el, start: Date.now(), raf: 0 };
+    bootProgress(20);
+    // เส้นแผนที่กระเพื่อมออกจากตรงกลาง
+    var c = el.querySelector('canvas'), g = c.getContext('2d'), t0 = performance.now();
+    function size() { var d = Math.min(window.devicePixelRatio || 1, 2); c.width = c.clientWidth * d; c.height = c.clientHeight * d; g.setTransform(d, 0, 0, d, 0, 0); }
+    size(); boot.size = size; window.addEventListener('resize', size);
+    (function frame(t) {
+      if (!boot || boot.el !== el) return;
+      var w = c.clientWidth, h = c.clientHeight, cx = w / 2, cy = h * 0.42;
+      g.clearRect(0, 0, w, h);
+      var phase = REDUCE ? 0 : ((t - t0) / 2400) % 1;
+      for (var k = 0; k < 10; k++) {
+        var f = (k + phase) / 10, r = 30 + f * Math.max(w, h) * 0.8;
+        g.strokeStyle = 'rgba(255,255,255,' + (0.3 * (1 - f)).toFixed(3) + ')';
+        g.lineWidth = 1.2; g.beginPath();
+        for (var a = 0; a <= Math.PI * 2 + 0.01; a += 0.07) {
+          var rr = r * (1 + 0.09 * Math.sin(a * 3 + k) + 0.05 * Math.cos(a * 5 - k));
+          var x = cx + Math.cos(a) * rr * 1.1, y = cy + Math.sin(a) * rr * 0.85;
+          if (a === 0) g.moveTo(x, y); else g.lineTo(x, y);
+        }
+        g.stroke();
+      }
+      if (!REDUCE) boot.raf = requestAnimationFrame(frame);
+    })(performance.now());
+  }
+  function bootProgress(pct) { if (boot) boot.el.querySelector('.boot-bar i').style.width = pct + '%'; }
+  // ปิดหน้าโหลด: รอให้อนิเมชันเล่นครบก่อน (ประมาณ 2 วินาที) แล้วค่อยจางหาย
+  function bootHide(now) {
+    if (!boot) return;
+    var b = boot, wait = now ? 0 : Math.max(0, (REDUCE ? 500 : 2200) - (Date.now() - b.start));
+    bootProgress(100);
+    setTimeout(function () {
+      b.el.classList.add('out');
+      setTimeout(function () { cancelAnimationFrame(b.raf); window.removeEventListener('resize', b.size); b.el.remove(); if (boot === b) boot = null; }, REDUCE ? 0 : 450);
+    }, wait);
+  }
+
   function tryLogin(t, manual) {
-    token = t; ui.busy = true; ui.loginBusy = !!manual; ui.loginError = ''; render();
+    token = t; ui.busy = true; ui.loginBusy = false; ui.loginError = '';
+    bootShow();
     return gh('GET', repoPath).then(function (repo) {
       if (!repo.permissions || !repo.permissions.push) { var e = new Error('no push'); e.status = 403; throw e; }
       if (!CFG.branch) CFG.branch = repo.default_branch;
+      bootProgress(55);
       return loadData();
-    }).then(function () { ui.busy = false; ui.loginBusy = false; ui.loginDraft = ''; render(); return true; }, function (err) {
-      ui.busy = false; ui.loginBusy = false; logout();
+    }).then(function () {
+      bootProgress(90);
+      ui.busy = false; ui.loginDraft = ''; render(); bootHide(false); return true;
+    }, function (err) {
+      ui.busy = false; logout();
       ui.loginError = err.status === 401 ? 'Token ไม่ถูกต้องหรือหมดอายุ ลองคัดลอกใหม่ให้ครบ หรือสร้าง Token ใหม่'
         : (err.status === 403 || err.status === 404) ? 'Token นี้ยังไม่มีสิทธิ์แก้ไข ' + CFG.owner + '/' + CFG.repo + ' ตรวจว่าเลือก Resource owner เป็น ' + CFG.owner + ' และเปิด Contents: Read and write แล้ว'
         : 'เชื่อมต่อ GitHub ไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วลองอีกครั้ง';
-      render(); var f = document.getElementById('tok'); if (f) f.focus();
+      render(); bootHide(true);
+      var f = document.getElementById('tok'); if (f) f.focus();
       return false;
     });
   }
@@ -230,7 +295,7 @@
   }
 
   function render() {
-    if (token && ui.busy && !STATE && !ui.loginBusy) { app.innerHTML = page('<section class="wrap" style="padding-top:20px">' + B.skTable(5) + '</section>'); return; }
+    if (token && ui.busy && !STATE && !boot) { app.innerHTML = page('<section class="wrap" style="padding-top:20px">' + B.skTable(5) + '</section>'); return; }
     if (!token || !STATE || ui.loginBusy) { document.body.classList.add('is-auth'); app.innerHTML = loginPage(ui.loginError); drawAuthContours(); return; }
     document.body.classList.remove('is-auth');
     var lv = ui.live || {};
@@ -460,5 +525,6 @@
 
   // ---------- start ----------
   token = getToken();
-  if (token) tryLogin(token); else render();
+  render();
+  if (token) tryLogin(token);
 })();
