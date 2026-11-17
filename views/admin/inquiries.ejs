@@ -1,0 +1,27 @@
+<%- include('../partials/admin-header') %>
+<% if (!inquiries.length) { %><div class="panel"><p class="muted">ยังไม่มีข้อความจากผู้สนใจ</p></div><% } %>
+<div class="inq-list">
+<% inquiries.forEach(i => { %>
+  <div class="panel inq <%= i.is_read ? '' : 'unread' %>">
+    <div class="inq-head">
+      <div>
+        <strong><%= i.name %></strong> <% if (!i.is_read) { %><span class="pill">ใหม่</span><% } %><br>
+        <small class="muted"><%= i.created_at %></small>
+      </div>
+      <div class="actions">
+        <form method="post" action="/admin/inquiries/<%= i.id %>/read"><input type="hidden" name="_csrf" value="<%= csrf() %>">
+          <button class="btn btn-sm btn-ghost"><%= i.is_read ? 'ทำเป็นยังไม่อ่าน' : 'ทำเป็นอ่านแล้ว' %></button></form>
+        <form method="post" action="/admin/inquiries/<%= i.id %>/delete" onsubmit="return confirm('ลบข้อความนี้?')"><input type="hidden" name="_csrf" value="<%= csrf() %>">
+          <button class="btn btn-sm btn-danger">ลบ</button></form>
+      </div>
+    </div>
+    <p>
+      <% if (i.phone) { %>📞 <a href="tel:<%= i.phone.replace(/[^0-9+]/g, '') %>"><%= i.phone %></a> &nbsp;<% } %>
+      <% if (i.email) { %>✉️ <a href="mailto:<%= i.email %>"><%= i.email %></a><% } %>
+    </p>
+    <p class="muted">เรื่อง: <% if (i.land_id && i.land_title) { %><a href="/admin/lands/<%= i.land_id %>/edit"><%= i.land_title %></a><% } else { %>ติดต่อทั่วไป / ฝากขาย<% } %></p>
+    <% if (i.message) { %><div class="desc"><%= i.message %></div><% } %>
+  </div>
+<% }) %>
+</div>
+<%- include('../partials/admin-footer') %>

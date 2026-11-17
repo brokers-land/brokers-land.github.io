@@ -1,0 +1,35 @@
+<%- include('../partials/admin-header') %>
+<form class="form" method="post" action="/admin/settings">
+  <input type="hidden" name="_csrf" value="<%= csrf() %>">
+  <div class="two-col">
+    <div class="panel">
+      <h2>ข้อมูลเว็บไซต์</h2>
+      <label>ชื่อเว็บไซต์ / ชื่อบริษัท<input name="site_name" value="<%= s.site_name %>" required></label>
+      <label>สโลแกน<input name="tagline" value="<%= s.tagline %>"></label>
+      <label>หัวข้อหลักหน้าแรก<input name="hero_title" value="<%= s.hero_title %>"></label>
+      <label>ข้อความใต้หัวข้อหน้าแรก<textarea name="hero_subtitle" rows="3"><%= s.hero_subtitle %></textarea></label>
+      <label>เกี่ยวกับเรา (แสดงที่ท้ายเว็บ)<textarea name="about_text" rows="4"><%= s.about_text %></textarea></label>
+      <label>ข้อความท้ายเว็บ (Footer)<input name="footer_text" value="<%= s.footer_text %>"></label>
+    </div>
+    <div>
+      <div class="panel">
+        <h2>ช่องทางติดต่อ</h2>
+        <label>เบอร์โทรศัพท์<input name="phone" value="<%= s.phone %>"></label>
+        <label>LINE ID<input name="line_id" value="<%= s.line_id %>" placeholder="@yourline"></label>
+        <label>อีเมล<input name="email" type="email" value="<%= s.email %>"></label>
+        <label>ลิงก์ Facebook<input name="facebook_url" type="url" value="<%= s.facebook_url %>" placeholder="https://facebook.com/..."></label>
+        <label>ที่อยู่สำนักงาน<textarea name="office_address" rows="2"><%= s.office_address %></textarea></label>
+      </div>
+      <div class="panel">
+        <h2>การแสดงผล</h2>
+        <label>สีหลักของเว็บไซต์
+          <span class="color-row"><input name="primary_color" type="color" value="<%= s.primary_color %>"> <span class="muted"><%= s.primary_color %></span></span>
+        </label>
+        <label>จำนวนประกาศต่อหน้า<input name="per_page" type="number" min="3" max="60" value="<%= s.per_page %>"></label>
+        <label class="check"><input type="checkbox" name="show_price" value="1" <%= s.show_price === '1' ? 'checked' : '' %>> แสดงราคาบนหน้าเว็บ (ถ้าไม่เลือก จะแสดง "สอบถามราคา")</label>
+      </div>
+    </div>
+  </div>
+  <button class="btn" type="submit">💾 บันทึกการตั้งค่า</button>
+</form>
+<%- include('../partials/admin-footer') %>

@@ -1,0 +1,27 @@
+<%- include('head') %>
+<body class="admin">
+<div class="admin-shell">
+  <aside class="admin-side">
+    <button class="nav-toggle side-close" aria-label="ปิดเมนู" onclick="document.body.classList.remove('nav-open')">✕</button>
+    <a class="brand" href="/admin"><strong><%= settings.site_name %></strong><small>ระบบจัดการหลังบ้าน</small></a>
+    <nav>
+      <a href="/admin" class="<%= currentPath === '/' ? 'active' : '' %>">📊 แดชบอร์ด</a>
+      <a href="/admin/lands" class="<%= currentPath.startsWith('/lands') && currentPath !== '/lands/new' ? 'active' : '' %>">🗺️ ประกาศที่ดิน</a>
+      <a href="/admin/lands/new" class="<%= currentPath === '/lands/new' ? 'active' : '' %>">➕ เพิ่มประกาศ</a>
+      <a href="/admin/inquiries" class="<%= currentPath.startsWith('/inquiries') ? 'active' : '' %>">✉️ ข้อความ <% if (unread) { %><span class="pill"><%= unread %></span><% } %></a>
+      <a href="/admin/settings" class="<%= currentPath.startsWith('/settings') ? 'active' : '' %>">⚙️ ตั้งค่าเว็บไซต์</a>
+      <a href="/admin/account" class="<%= currentPath.startsWith('/account') ? 'active' : '' %>">👤 บัญชีผู้ดูแล</a>
+      <a href="/" target="_blank">🌐 ดูหน้าเว็บไซต์ ↗</a>
+    </nav>
+    <form method="post" action="/admin/logout" class="logout">
+      <input type="hidden" name="_csrf" value="<%= csrf() %>">
+      <span class="muted">เข้าสู่ระบบ: <%= currentUser.username %></span>
+      <button class="btn btn-ghost btn-sm" type="submit">ออกจากระบบ</button>
+    </form>
+  </aside>
+  <div class="admin-main">
+    <div class="admin-top">
+      <button class="nav-toggle" aria-label="เมนู" onclick="document.body.classList.toggle('nav-open')">☰</button>
+      <h1><%= title %></h1>
+    </div>
+    <% if (flash) { %><div class="alert alert-<%= flash.type %>"><%= flash.message %></div><% } %>

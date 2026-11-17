@@ -1,0 +1,156 @@
+<%- include('../partials/admin-header', { useMap: true }) %>
+<% const isNew = !land.id; const v = k => land[k] == null ? '' : land[k]; %>
+<form class="form land-form" method="post" action="<%= isNew ? '/admin/lands' : '/admin/lands/' + land.id %>" enctype="multipart/form-data">
+  <input type="hidden" name="_csrf" value="<%= csrf() %>">
+  <div class="two-col wide-left">
+    <div>
+      <div class="panel">
+        <h2>ข้อมูลหลัก</h2>
+        <label>ชื่อประกาศ *<input name="title" required maxlength="200" value="<%= v('title') %>" placeholder="เช่น ที่ดินเปล่าติดถนนใหญ่ ใกล้ตัวเมือง"></label>
+        <div class="row">
+          <label>ประเภทที่ดิน
+            <select name="land_type"><option value="">- เลือก -</option>
+              <% LAND_TYPES.forEach(t => { %><option <%= land.land_type === t ? 'selected' : '' %>><%= t %></option><% }) %>
+            </select>
+          </label>
+          <label>เอกสารสิทธิ์
+            <select name="deed_type"><option value="">- เลือก -</option>
+              <% DEED_TYPES.forEach(t => { %><option <%= land.deed_type === t ? 'selected' : '' %>><%= t %></option><% }) %>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>ขนาดที่ดินและราคา</h2>
+        <div class="row row-3">
+          <label>ไร่<input name="rai" type="number" min="0" step="1" value="<%= v('rai') %>" data-area></label>
+          <label>งาน (0-3)<input name="ngan" type="number" min="0" max="3" step="1" value="<%= v('ngan') %>" data-area></label>
+          <label>ตารางวา (0-99)<input name="wa" type="number" min="0" max="99.99" step="0.01" value="<%= v('wa') %>" data-area></label>
+        </div>
+        <label>ราคาขายรวม (บาท)<input name="price" type="number" min="0" step="any" value="<%= v('price') %>" data-area placeholder="ใส่ 0 = สอบถามราคา"></label>
+        <p class="calc" id="calc"></p>
+      </div>
+
+      <div class="panel">
+        <h2>ที่ตั้ง</h2>
+        <div class="row row-3">
+          <label>จังหวัด
+            <input name="province" list="provinces" value="<%= v('province') %>">
+            <datalist id="provinces"><% PROVINCES.forEach(p => { %><option value="<%= p %>"><% }) %></datalist>
+          </label>
+          <label>อำเภอ/เขต<input name="district" value="<%= v('district') %>"></label>
+          <label>ตำบล/แขวง<input name="subdistrict" value="<%= v('subdistrict') %>"></label>
+        </div>
+        <label>ที่ตั้ง / ถนน / ซอย<input name="address" value="<%= v('address') %>"></label>
+        <p class="muted">คลิกบนแผนที่เพื่อปักหมุดตำแหน่งที่ดิน (หรือกรอกพิกัดเอง / วางพิกัดจาก Google Maps)</p>
+        <div id="pickmap" class="map"></div>
+        <div class="row">
+          <label>ละติจูด (Latitude)<input name="lat" id="lat" type="number" step="any" value="<%= v('lat') %>"></label>
+          <label>ลองจิจูด (Longitude)<input name="lng" id="lng" type="number" step="any" value="<%= v('lng') %>"></label>
+        </div>
+        <button type="button" class="btn btn-ghost btn-sm" id="clearPin">ลบหมุด</button>
+      </div>
+
+      <div class="panel">
+        <h2>รายละเอียดเพิ่มเติม</h2>
+        <label>ทางเข้า-ออก / หน้ากว้าง<input name="road_access" value="<%= v('road_access') %>" placeholder="เช่น ติดถนนลาดยาง หน้ากว้าง 40 ม."></label>
+        <label>สาธารณูปโภค<input name="utilities" value="<%= v('utilities') %>" placeholder="เช่น ไฟฟ้า, ประปา, อินเทอร์เน็ต"></label>
+        <label>คำอธิบาย<textarea name="description" rows="8"><%= v('description') %></textarea></label>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel sticky">
+        <h2>การเผยแพร่</h2>
+        <label>สถานะ
+          <select name="status">
+            <% Object.entries(STATUS).forEach(([k, s]) => { %><option value="<%= k %>" <%= land.status === k ? 'selected' : '' %>><%= s.label %></option><% }) %>
+          </select>
+        </label>
+        <label class="check"><input type="checkbox" name="published" value="1" <%= land.published ? 'checked' : '' %>> แสดงบนเว็บไซต์</label>
+        <label class="check"><input type="checkbox" name="featured" value="1" <%= land.featured ? 'checked' : '' %>> ⭐ ประกาศแนะนำ (แสดงหน้าแรก)</label>
+        <label>เพิ่มรูปภาพ (เลือกได้หลายรูป, สูงสุด 8MB/รูป)
+          <input type="file" name="images" accept="image/jpeg,image/png,image/webp,image/gif" multiple>
+        </label>
+        <button class="btn btn-block" type="submit">💾 บันทึก</button>
+        <% if (!isNew) { %>
+          <a class="btn btn-ghost btn-block" href="/lands/<%= land.id %>" target="_blank">ดูหน้าประกาศ ↗</a>
+          <p class="muted small">เข้าชม <%= h.fmtNumber(land.views) %> ครั้ง · แก้ไขล่าสุด <%= land.updated_at %></p>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</form>
+
+<% if (!isNew) { %>
+<div class="panel" id="images">
+  <h2>รูปภาพ (<%= images.length %>)</h2>
+  <% if (!images.length) { %><p class="muted">ยังไม่มีรูปภาพ — เพิ่มได้จากช่อง "เพิ่มรูปภาพ" ด้านบนแล้วกดบันทึก</p><% } %>
+  <div class="img-grid">
+    <% images.forEach((img, i) => { %>
+      <div class="img-item">
+        <img src="/uploads/<%= img.filename %>" alt="">
+        <% if (i === 0) { %><span class="badge badge-featured">รูปปก</span><% } %>
+        <div class="img-actions">
+          <% if (i !== 0) { %>
+          <form method="post" action="/admin/images/<%= img.id %>/cover">
+            <input type="hidden" name="_csrf" value="<%= csrf() %>"><button class="btn btn-sm btn-ghost">ตั้งเป็นปก</button>
+          </form>
+          <% } %>
+          <form method="post" action="/admin/images/<%= img.id %>/delete" onsubmit="return confirm('ลบรูปนี้?')">
+            <input type="hidden" name="_csrf" value="<%= csrf() %>"><button class="btn btn-sm btn-danger">ลบ</button>
+          </form>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+</div>
+<% } %>
+
+<script>
+(function () {
+  var f = document.querySelector('.land-form');
+  var calc = document.getElementById('calc');
+  function fmt(n, d) { return Number(n).toLocaleString('th-TH', { maximumFractionDigits: d || 0 }); }
+  function update() {
+    var rai = +f.rai.value || 0, ngan = +f.ngan.value || 0, wa = +f.wa.value || 0, price = +f.price.value || 0;
+    var total = rai * 400 + ngan * 100 + wa;
+    var s = 'พื้นที่รวม ' + fmt(total, 2) + ' ตร.ว. (' + fmt(total * 4, 2) + ' ตร.ม. / ' + fmt(total / 400, 2) + ' ไร่)';
+    if (total && price) s += ' · ราคาเฉลี่ย ' + fmt(price / total) + ' บาท/ตร.ว. · ' + fmt(price / total * 400) + ' บาท/ไร่';
+    calc.textContent = s;
+  }
+  document.querySelectorAll('[data-area]').forEach(function (el) { el.addEventListener('input', update); });
+  update();
+
+  window.addEventListener('load', function () {
+    if (!window.L) return;
+    var lat = document.getElementById('lat'), lng = document.getElementById('lng');
+    var has = lat.value !== '' && lng.value !== '';
+    var center = has ? [+lat.value, +lng.value] : [13.7563, 100.5018];
+    var map = L.map('pickmap').setView(center, has ? 15 : 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map);
+    var marker = has ? L.marker(center, { draggable: true }).addTo(map) : null;
+    function setPin(ll) {
+      if (!marker) { marker = L.marker(ll, { draggable: true }).addTo(map); marker.on('dragend', function () { write(marker.getLatLng()); }); }
+      else marker.setLatLng(ll);
+      write(ll);
+    }
+    function write(ll) { lat.value = ll.lat.toFixed(6); lng.value = ll.lng.toFixed(6); }
+    if (marker) marker.on('dragend', function () { write(marker.getLatLng()); });
+    map.on('click', function (e) { setPin(e.latlng); });
+    function fromInputs() {
+      if (lat.value !== '' && lng.value !== '') { var ll = L.latLng(+lat.value, +lng.value); if (!marker) setPin(ll); else marker.setLatLng(ll); map.setView(ll, Math.max(map.getZoom(), 14)); }
+    }
+    lat.addEventListener('change', fromInputs); lng.addEventListener('change', fromInputs);
+    // รองรับการวาง "13.7563, 100.5018" จาก Google Maps ลงช่องละติจูด
+    lat.addEventListener('paste', function (e) {
+      var t = (e.clipboardData || window.clipboardData).getData('text');
+      var m = t.match(/(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/);
+      if (m) { e.preventDefault(); lat.value = m[1]; lng.value = m[2]; fromInputs(); }
+    });
+    document.getElementById('clearPin').onclick = function () { if (marker) { map.removeLayer(marker); marker = null; } lat.value = ''; lng.value = ''; };
+  });
+})();
+</script>
+<%- include('../partials/admin-footer') %>

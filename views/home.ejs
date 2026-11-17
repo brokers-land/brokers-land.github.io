@@ -1,0 +1,68 @@
+<%- include('partials/header') %>
+<section class="hero">
+  <div class="container hero-inner">
+    <h1><%= settings.hero_title %></h1>
+    <p><%= settings.hero_subtitle %></p>
+    <form class="search-box" action="/lands" method="get">
+      <input type="text" name="q" placeholder="ค้นหา เช่น ติดถนน, อำเภอ, ตำบล...">
+      <select name="province">
+        <option value="">ทุกจังหวัด</option>
+        <% PROVINCES.forEach(p => { %><option><%= p %></option><% }) %>
+      </select>
+      <select name="type">
+        <option value="">ทุกประเภท</option>
+        <% LAND_TYPES.forEach(t => { %><option><%= t %></option><% }) %>
+      </select>
+      <button class="btn" type="submit">ค้นหาที่ดิน</button>
+    </form>
+    <div class="hero-stats">
+      <div><strong><%= stats.total || 0 %></strong><span>ประกาศทั้งหมด</span></div>
+      <div><strong><%= stats.available || 0 %></strong><span>พร้อมขาย</span></div>
+      <div><strong><%= stats.provinces || 0 %></strong><span>จังหวัด</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="container section">
+  <div class="section-head">
+    <h2>ที่ดินแนะนำ</h2>
+    <a href="/lands">ดูทั้งหมด →</a>
+  </div>
+  <% if (featured.length) { %>
+    <div class="grid">
+      <% featured.forEach(land => { %><%- include('partials/land-card', { land }) %><% }) %>
+    </div>
+  <% } else { %>
+    <p class="empty">ยังไม่มีประกาศ</p>
+  <% } %>
+</section>
+
+<% if (provinces.length) { %>
+<section class="container section">
+  <h2>ค้นหาตามจังหวัด</h2>
+  <div class="chips">
+    <% provinces.forEach(p => { %>
+      <a class="chip" href="/lands?province=<%= encodeURIComponent(p.province) %>"><%= p.province %> <span><%= p.c %></span></a>
+    <% }) %>
+  </div>
+</section>
+<% } %>
+
+<section class="container section">
+  <div class="why">
+    <div><div class="why-icon">📄</div><h3>ตรวจสอบเอกสารสิทธิ์</h3><p>ทุกแปลงตรวจสอบโฉนดและภาระผูกพันก่อนลงประกาศ</p></div>
+    <div><div class="why-icon">📐</div><h3>ข้อมูลครบ ชัดเจน</h3><p>บอกขนาดเป็นไร่ งาน ตารางวา ราคาต่อตารางวา และพิกัดแผนที่</p></div>
+    <div><div class="why-icon">🤝</div><h3>ดูแลจนโอนเสร็จ</h3><p>ประสานงานนัดดูที่ ต่อรองราคา และดำเนินการที่สำนักงานที่ดิน</p></div>
+  </div>
+</section>
+
+<section class="cta">
+  <div class="container cta-inner">
+    <div>
+      <h2>มีที่ดินอยากขาย?</h2>
+      <p>ฝากขายกับเรา ช่วยหาผู้ซื้อ ถ่ายรูป ลงประกาศ ให้ฟรี</p>
+    </div>
+    <a class="btn btn-light" href="/contact">ฝากขายที่ดิน</a>
+  </div>
+</section>
+<%- include('partials/footer') %>

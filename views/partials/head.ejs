@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title ? title + ' | ' : '' %><%= settings.site_name %></title>
+  <meta name="description" content="<%= settings.tagline %>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>:root{--primary: <%= /^#[0-9a-fA-F]{6}$/.test(settings.primary_color) ? settings.primary_color : '#1f7a4d' %>;}</style>
+  <% if (typeof useMap !== 'undefined' && useMap) { %>
+  <link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
+  <script src="/vendor/leaflet/leaflet.js" defer></script>
+  <% } %>
+</head>

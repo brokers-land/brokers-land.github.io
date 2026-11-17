@@ -1,0 +1,27 @@
+<a class="card land-card" href="/lands/<%= land.id %>">
+  <div class="card-img">
+    <% if (land.cover) { %>
+      <img src="/uploads/<%= land.cover %>" alt="<%= land.title %>" loading="lazy">
+    <% } else { %>
+      <img src="/static/img/placeholder.svg" alt="" loading="lazy">
+    <% } %>
+    <span class="badge badge-<%= h.STATUS[land.status] ? h.STATUS[land.status].cls : 'available' %>"><%= h.STATUS[land.status] ? h.STATUS[land.status].label : '' %></span>
+    <% if (land.featured) { %><span class="badge badge-featured">แนะนำ</span><% } %>
+  </div>
+  <div class="card-body">
+    <h3 class="card-title"><%= land.title %></h3>
+    <p class="muted loc">📍 <%= [land.subdistrict && 'ต.' + land.subdistrict, land.district && 'อ.' + land.district, land.province && 'จ.' + land.province].filter(Boolean).join(' ') || '-' %></p>
+    <div class="card-meta">
+      <span>📐 <%= h.fmtArea(land) %></span>
+      <% if (land.land_type) { %><span>🏷️ <%= land.land_type %></span><% } %>
+    </div>
+    <div class="card-price">
+      <% if (settings.show_price === '1') { %>
+        <strong><%= h.fmtPriceShort(land.price) %></strong>
+        <% if (h.pricePerWa(land)) { %><small><%= h.fmtNumber(h.pricePerWa(land)) %> บาท/ตร.ว.</small><% } %>
+      <% } else { %>
+        <strong>สอบถามราคา</strong>
+      <% } %>
+    </div>
+  </div>
+</a>

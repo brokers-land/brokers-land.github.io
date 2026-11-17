@@ -1,0 +1,34 @@
+</main>
+<footer class="site-footer">
+  <div class="container footer-grid">
+    <div>
+      <h3><%= settings.site_name %></h3>
+      <p><%= settings.about_text %></p>
+    </div>
+    <div>
+      <h4>ติดต่อ</h4>
+      <ul class="plain">
+        <% if (settings.phone) { %><li>โทร: <a href="tel:<%= settings.phone.replace(/[^0-9+]/g, '') %>"><%= settings.phone %></a></li><% } %>
+        <% if (settings.line_id) { %><li>LINE: <%= settings.line_id %></li><% } %>
+        <% if (settings.email) { %><li>อีเมล: <a href="mailto:<%= settings.email %>"><%= settings.email %></a></li><% } %>
+        <% if (settings.office_address) { %><li>ที่อยู่: <%= settings.office_address %></li><% } %>
+        <% if (settings.facebook_url) { %><li><a href="<%= settings.facebook_url %>" target="_blank" rel="noopener">Facebook</a></li><% } %>
+      </ul>
+    </div>
+    <div>
+      <h4>เมนู</h4>
+      <ul class="plain">
+        <li><a href="/lands">ประกาศขายที่ดินทั้งหมด</a></li>
+        <li><a href="/contact">ฝากขายที่ดิน</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="container copyright">
+    © <%= new Date().getFullYear() + 543 %> <%= settings.site_name %>. <%= settings.footer_text %>
+  </div>
+</footer>
+<% if (settings.line_id) { %>
+<a class="float-line" href="https://line.me/R/ti/p/<%= encodeURIComponent(settings.line_id) %>" target="_blank" rel="noopener" aria-label="LINE">LINE</a>
+<% } %>
+</body>
+</html>

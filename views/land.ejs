@@ -1,0 +1,121 @@
+<%- include('partials/header', { useMap: land.lat != null && land.lng != null }) %>
+<% const st = h.STATUS[land.status] || h.STATUS.available;
+   const loc = [land.subdistrict && 'ต.' + land.subdistrict, land.district && 'อ.' + land.district, land.province && 'จ.' + land.province].filter(Boolean).join(' ');
+   const hasMap = land.lat != null && land.lng != null; %>
+<section class="container section">
+  <nav class="crumbs"><a href="/">หน้าแรก</a> / <a href="/lands">ประกาศขายที่ดิน</a><% if (land.province) { %> / <a href="/lands?province=<%= encodeURIComponent(land.province) %>"><%= land.province %></a><% } %></nav>
+
+  <div class="detail-head">
+    <div>
+      <span class="badge badge-<%= st.cls %> static"><%= st.label %></span>
+      <h1><%= land.title %></h1>
+      <p class="muted">📍 <%= loc || '-' %><% if (land.address) { %> · <%= land.address %><% } %></p>
+    </div>
+    <div class="detail-price">
+      <% if (settings.show_price === '1') { %>
+        <strong><%= h.fmtPrice(land.price) %></strong>
+        <% if (h.pricePerWa(land)) { %><small>เฉลี่ย <%= h.fmtNumber(h.pricePerWa(land)) %> บาท/ตร.ว. · <%= h.fmtNumber(h.pricePerRai(land)) %> บาท/ไร่</small><% } %>
+      <% } else { %><strong>สอบถามราคา</strong><% } %>
+    </div>
+  </div>
+
+  <div class="detail-grid">
+    <div>
+      <div class="gallery">
+        <div class="gallery-main">
+          <img id="mainImg" src="<%= images.length ? '/uploads/' + images[0].filename : '/static/img/placeholder.svg' %>" alt="<%= land.title %>">
+        </div>
+        <% if (images.length > 1) { %>
+        <div class="thumbs">
+          <% images.forEach((img, i) => { %>
+            <button type="button" class="<%= i === 0 ? 'active' : '' %>" onclick="document.getElementById('mainImg').src=this.dataset.src;document.querySelectorAll('.thumbs button').forEach(b=>b.classList.remove('active'));this.classList.add('active')" data-src="/uploads/<%= img.filename %>">
+              <img src="/uploads/<%= img.filename %>" alt="" loading="lazy">
+            </button>
+          <% }) %>
+        </div>
+        <% } %>
+      </div>
+
+      <div class="panel">
+        <h2>ข้อมูลที่ดิน</h2>
+        <div class="area-box">
+          <div><strong><%= h.fmtNumber(land.rai) %></strong><span>ไร่</span></div>
+          <div><strong><%= h.fmtNumber(land.ngan) %></strong><span>งาน</span></div>
+          <div><strong><%= h.fmtNumber(land.wa, 2) %></strong><span>ตารางวา</span></div>
+          <div class="total"><strong><%= h.fmtNumber(h.totalWa(land), 2) %></strong><span>ตร.ว. รวม (<%= h.fmtNumber(h.totalWa(land) * 4, 2) %> ตร.ม.)</span></div>
+        </div>
+        <table class="spec">
+          <tr><th>รหัสประกาศ</th><td>#<%= String(land.id).padStart(4, '0') %></td></tr>
+          <tr><th>ประเภทที่ดิน</th><td><%= land.land_type || '-' %></td></tr>
+          <tr><th>เอกสารสิทธิ์</th><td><%= land.deed_type || '-' %></td></tr>
+          <tr><th>จังหวัด</th><td><%= land.province || '-' %></td></tr>
+          <tr><th>อำเภอ/เขต</th><td><%= land.district || '-' %></td></tr>
+          <tr><th>ตำบล/แขวง</th><td><%= land.subdistrict || '-' %></td></tr>
+          <% if (land.address) { %><tr><th>ที่ตั้ง/ถนน</th><td><%= land.address %></td></tr><% } %>
+          <tr><th>ทางเข้า-ออก</th><td><%= land.road_access || '-' %></td></tr>
+          <tr><th>สาธารณูปโภค</th><td><%= land.utilities || '-' %></td></tr>
+          <tr><th>ยอดเข้าชม</th><td><%= h.fmtNumber(land.views) %> ครั้ง</td></tr>
+        </table>
+      </div>
+
+      <% if (land.description) { %>
+      <div class="panel">
+        <h2>รายละเอียด</h2>
+        <div class="desc"><%= land.description %></div>
+      </div>
+      <% } %>
+
+      <% if (hasMap) { %>
+      <div class="panel">
+        <h2>แผนที่ตั้ง</h2>
+        <div id="map" class="map" data-lat="<%= land.lat %>" data-lng="<%= land.lng %>"></div>
+        <p><a class="btn btn-ghost" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=<%= land.lat %>,<%= land.lng %>">เปิดใน Google Maps ↗</a></p>
+      </div>
+      <% } %>
+    </div>
+
+    <aside id="contact">
+      <div class="panel sticky">
+        <h2>สนใจที่ดินแปลงนี้</h2>
+        <div class="contact-buttons">
+          <% if (settings.phone) { %><a class="btn btn-block" href="tel:<%= settings.phone.replace(/[^0-9+]/g, '') %>">📞 โทร <%= settings.phone %></a><% } %>
+          <% if (settings.line_id) { %><a class="btn btn-block btn-line" target="_blank" rel="noopener" href="https://line.me/R/ti/p/<%= encodeURIComponent(settings.line_id) %>">💬 LINE <%= settings.line_id %></a><% } %>
+        </div>
+        <% if (sent) { %>
+          <div class="alert alert-success">ส่งข้อความเรียบร้อยแล้ว เจ้าหน้าที่จะติดต่อกลับโดยเร็ว</div>
+        <% } else { %>
+        <form method="post" action="/lands/<%= land.id %>/inquiry" class="form">
+          <label>ชื่อ *<input name="name" required maxlength="100"></label>
+          <label>เบอร์โทร<input name="phone" maxlength="30" inputmode="tel"></label>
+          <label>อีเมล<input name="email" type="email" maxlength="120"></label>
+          <label>ข้อความ<textarea name="message" rows="4" maxlength="2000">สนใจที่ดินรหัส #<%= String(land.id).padStart(4, '0') %> ขอรายละเอียดเพิ่มเติม / นัดดูที่ดิน</textarea></label>
+          <input type="text" name="website" class="hp" tabindex="-1" autocomplete="off">
+          <button class="btn btn-block" type="submit">ส่งข้อความ</button>
+        </form>
+        <% } %>
+      </div>
+    </aside>
+  </div>
+
+  <% if (related.length) { %>
+  <div class="section">
+    <h2>ที่ดินอื่นใน<%= land.province %></h2>
+    <div class="grid">
+      <% related.forEach(r => { %><%- include('partials/land-card', { land: r }) %><% }) %>
+    </div>
+  </div>
+  <% } %>
+</section>
+<% if (hasMap) { %>
+<script>
+  window.addEventListener('load', function () {
+    var el = document.getElementById('map');
+    if (!window.L) { el.style.display = 'none'; return; }
+    var ll = [parseFloat(el.dataset.lat), parseFloat(el.dataset.lng)];
+    var map = L.map(el).setView(ll, 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map);
+    L.marker(ll).addTo(map);
+  });
+</script>
+<% } %>
+<%- include('partials/footer') %>

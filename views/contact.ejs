@@ -1,0 +1,30 @@
+<%- include('partials/header') %>
+<section class="container section narrow">
+  <h1 class="page-title">ติดต่อเรา / ฝากขายที่ดิน</h1>
+  <div class="detail-grid">
+    <div class="panel">
+      <% if (sent) { %>
+        <div class="alert alert-success">ได้รับข้อความของคุณแล้ว เจ้าหน้าที่จะติดต่อกลับโดยเร็วที่สุด ขอบคุณครับ</div>
+      <% } %>
+      <form method="post" action="/contact" class="form">
+        <label>ชื่อ-นามสกุล *<input name="name" required maxlength="100"></label>
+        <label>เบอร์โทร<input name="phone" maxlength="30" inputmode="tel"></label>
+        <label>อีเมล<input name="email" type="email" maxlength="120"></label>
+        <label>รายละเอียด<textarea name="message" rows="6" maxlength="2000" placeholder="เช่น ต้องการฝากขายที่ดิน จ.ชลบุรี ขนาด 2 ไร่ โฉนด ติดถนน..."></textarea></label>
+        <input type="text" name="website" class="hp" tabindex="-1" autocomplete="off">
+        <button class="btn" type="submit">ส่งข้อความ</button>
+      </form>
+    </div>
+    <aside class="panel">
+      <h2>ช่องทางติดต่อ</h2>
+      <ul class="plain contact-list">
+        <% if (settings.phone) { %><li>📞 <a href="tel:<%= settings.phone.replace(/[^0-9+]/g, '') %>"><%= settings.phone %></a></li><% } %>
+        <% if (settings.line_id) { %><li>💬 LINE: <%= settings.line_id %></li><% } %>
+        <% if (settings.email) { %><li>✉️ <a href="mailto:<%= settings.email %>"><%= settings.email %></a></li><% } %>
+        <% if (settings.office_address) { %><li>🏢 <%= settings.office_address %></li><% } %>
+      </ul>
+      <p class="muted"><%= settings.about_text %></p>
+    </aside>
+  </div>
+</section>
+<%- include('partials/footer') %>

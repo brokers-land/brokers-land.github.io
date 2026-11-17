@@ -1,0 +1,34 @@
+<%- include('../partials/admin-header') %>
+<div class="stat-grid">
+  <div class="stat"><span>ประกาศทั้งหมด</span><strong><%= stats.total || 0 %></strong></div>
+  <div class="stat"><span>พร้อมขาย</span><strong class="c-available"><%= stats.available || 0 %></strong></div>
+  <div class="stat"><span>ติดจอง</span><strong class="c-reserved"><%= stats.reserved || 0 %></strong></div>
+  <div class="stat"><span>ขายแล้ว</span><strong class="c-sold"><%= stats.sold || 0 %></strong></div>
+  <div class="stat"><span>ยอดเข้าชมรวม</span><strong><%= h.fmtNumber(stats.views) %></strong></div>
+  <div class="stat"><span>ข้อความยังไม่อ่าน</span><strong><%= unread %></strong></div>
+</div>
+
+<div class="two-col">
+  <div class="panel">
+    <div class="section-head"><h2>ข้อความล่าสุด</h2><a href="/admin/inquiries">ดูทั้งหมด →</a></div>
+    <% if (!inquiries.length) { %><p class="muted">ยังไม่มีข้อความ</p><% } %>
+    <ul class="list">
+      <% inquiries.forEach(i => { %>
+        <li class="<%= i.is_read ? '' : 'unread' %>">
+          <strong><%= i.name %></strong> <span class="muted"><%= i.phone %> <%= i.email %></span><br>
+          <small class="muted"><%= i.created_at %> · <%= i.land_title ? 'เรื่อง: ' + i.land_title : 'ติดต่อทั่วไป' %></small>
+        </li>
+      <% }) %>
+    </ul>
+  </div>
+  <div class="panel">
+    <div class="section-head"><h2>ประกาศยอดนิยม</h2><a href="/admin/lands">จัดการ →</a></div>
+    <ul class="list">
+      <% popular.forEach(p => { %>
+        <li><a href="/admin/lands/<%= p.id %>/edit"><%= p.title %></a> <span class="muted">· <%= h.fmtNumber(p.views) %> ครั้ง</span></li>
+      <% }) %>
+    </ul>
+  </div>
+</div>
+<p><a class="btn" href="/admin/lands/new">➕ เพิ่มประกาศที่ดินใหม่</a></p>
+<%- include('../partials/admin-footer') %>

@@ -1,0 +1,49 @@
+<%- include('../partials/admin-header') %>
+<form class="toolbar" method="get">
+  <input name="q" value="<%= q.q || '' %>" placeholder="ค้นหาชื่อ / จังหวัด / อำเภอ">
+  <select name="status">
+    <option value="">ทุกสถานะ</option>
+    <% Object.entries(h.STATUS).forEach(([k, v]) => { %><option value="<%= k %>" <%= q.status === k ? 'selected' : '' %>><%= v.label %></option><% }) %>
+  </select>
+  <button class="btn btn-ghost" type="submit">ค้นหา</button>
+  <a class="btn" href="/admin/lands/new">➕ เพิ่มประกาศ</a>
+</form>
+<div class="table-wrap">
+<table class="table">
+  <thead><tr><th></th><th>ชื่อประกาศ</th><th>ที่ตั้ง</th><th>ขนาด</th><th>ราคา</th><th>สถานะ</th><th>เข้าชม</th><th></th></tr></thead>
+  <tbody>
+  <% if (!lands.length) { %><tr><td colspan="8" class="center muted">ไม่มีประกาศ</td></tr><% } %>
+  <% lands.forEach(l => { %>
+    <tr>
+      <td><img class="thumb" src="<%= l.cover ? '/uploads/' + l.cover : '/static/img/placeholder.svg' %>" alt=""></td>
+      <td>
+        <a href="/admin/lands/<%= l.id %>/edit"><strong><%= l.title %></strong></a><br>
+        <small class="muted">#<%= String(l.id).padStart(4, '0') %> · <%= l.image_count %> รูป
+          <%= l.featured ? '· ⭐ แนะนำ' : '' %> <%= l.published ? '' : '· 🔒 ซ่อนอยู่' %></small>
+      </td>
+      <td><%= [l.district, l.province].filter(Boolean).join(', ') || '-' %></td>
+      <td><%= h.fmtArea(l) %></td>
+      <td><%= h.fmtPriceShort(l.price) %></td>
+      <td>
+        <form method="post" action="/admin/lands/<%= l.id %>/status">
+          <input type="hidden" name="_csrf" value="<%= csrf() %>">
+          <select name="status" onchange="this.form.submit()" class="status-<%= l.status %>">
+            <% Object.entries(h.STATUS).forEach(([k, v]) => { %><option value="<%= k %>" <%= l.status === k ? 'selected' : '' %>><%= v.label %></option><% }) %>
+          </select>
+        </form>
+      </td>
+      <td><%= h.fmtNumber(l.views) %></td>
+      <td class="actions">
+        <a class="btn btn-sm btn-ghost" href="/lands/<%= l.id %>" target="_blank">ดู</a>
+        <a class="btn btn-sm" href="/admin/lands/<%= l.id %>/edit">แก้ไข</a>
+        <form method="post" action="/admin/lands/<%= l.id %>/delete" onsubmit="return confirm('ยืนยันการลบประกาศนี้? รูปภาพทั้งหมดจะถูกลบด้วย')">
+          <input type="hidden" name="_csrf" value="<%= csrf() %>">
+          <button class="btn btn-sm btn-danger" type="submit">ลบ</button>
+        </form>
+      </td>
+    </tr>
+  <% }) %>
+  </tbody>
+</table>
+</div>
+<%- include('../partials/admin-footer') %>
