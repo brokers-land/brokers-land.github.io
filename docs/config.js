@@ -2,6 +2,6 @@
 window.BL_CONFIG = {
   owner: 'pramvit18-glitch',      // ชื่อบัญชี GitHub
   repo: 'Brokers-Land',           // ชื่อ repository
-  branch: 'main',                 // branch ที่เปิด GitHub Pages
+  branch: '',                     // branch ที่เปิด GitHub Pages ('' = ใช้ branch หลักของ repo)
   dir: 'docs'                     // โฟลเดอร์ที่ GitHub Pages ใช้ (ใส่ '' ถ้าใช้ root)
 };

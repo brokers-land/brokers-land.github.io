@@ -29,8 +29,8 @@
 - หน้าผู้ดูแล: `https://<ชื่อบัญชี>.github.io/Brokers-Land/admin.html`
 
 **เปิดใช้งาน**
-1. ไฟล์ต้องอยู่บน branch `main` (หรือแก้ `branch` ใน `docs/config.js` ให้ตรงกับ branch ที่ใช้)
-2. GitHub → repository → **Settings → Pages** → Source: *Deploy from a branch* → Branch: `main` โฟลเดอร์ `/docs` → Save
+1. หน้า admin จะบันทึกลง branch หลักของ repo เอง (ถ้าต้องการ branch อื่น แก้ `branch` ใน `docs/config.js`)
+2. GitHub → repository → **Settings → Pages** → Source: *Deploy from a branch* → Branch: branch หลักของ repo โฟลเดอร์ `/docs` → Save
 3. รอ 1–2 นาที แล้วเปิดลิงก์หน้าเว็บ
 
 **เข้าหน้าผู้ดูแล** ต้องใช้ GitHub Token (ทำครั้งเดียว)

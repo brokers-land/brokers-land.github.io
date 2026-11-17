@@ -129,6 +129,7 @@
     token = t; ui.busy = true; render();
     return gh('GET', repoPath).then(function (repo) {
       if (!repo.permissions || !repo.permissions.push) { var e = new Error('no push'); e.status = 403; throw e; }
+      if (!CFG.branch) CFG.branch = repo.default_branch;
       return loadData();
     }).then(function () { ui.busy = false; render(); return true; }, function (err) {
       ui.busy = false; logout();
