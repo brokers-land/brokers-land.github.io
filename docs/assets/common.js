@@ -4,6 +4,18 @@
   var STATUS = { available: 'พร้อมขาย', reserved: 'ติดจอง', sold: 'ขายแล้ว' };
   var TYPES = ['ที่ดินเปล่า', 'ที่อยู่อาศัย', 'สวน/เกษตร', 'นา/ไร่', 'พาณิชยกรรม', 'อุตสาหกรรม', 'ริมน้ำ/ชายทะเล', 'อื่น ๆ'];
   var DEEDS = ['โฉนด (น.ส.4จ.)', 'น.ส.3ก.', 'น.ส.3', 'ส.ป.ก. 4-01', 'ภ.บ.ท.5', 'อื่น ๆ'];
+  var STATUS_TIP = {
+    available: 'ยังว่างอยู่ ติดต่อนัดดูที่ดินได้เลย',
+    reserved: 'มีผู้วางมัดจำแล้ว ฝากชื่อเป็นคิวสำรองได้',
+    sold: 'ปิดการขายแล้ว'
+  };
+  var DEED_TIP = {
+    'โฉนด (น.ส.4จ.)': 'โฉนดที่ดิน เอกสารสิทธิ์สมบูรณ์ที่สุด ซื้อขาย จำนอง และโอนได้ทันที',
+    'น.ส.3ก.': 'หนังสือรับรองการทำประโยชน์ มีระวางภาพถ่ายทางอากาศ ซื้อขายและโอนได้ทันที',
+    'น.ส.3': 'หนังสือรับรองการทำประโยชน์ ซื้อขายได้ แต่ต้องประกาศที่สำนักงานที่ดิน 30 วันก่อนโอน',
+    'ส.ป.ก. 4-01': 'ที่ดินปฏิรูปเพื่อเกษตรกรรม ห้ามซื้อขายเปลี่ยนมือทั่วไป ตกทอดได้ทางมรดก',
+    'ภ.บ.ท.5': 'หลักฐานการเสียภาษีบำรุงท้องที่ ไม่ใช่เอกสารสิทธิ์ในที่ดิน'
+  };
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function n(v) { v = Number(v); return isFinite(v) ? v : 0; }
@@ -15,6 +27,34 @@
   function perWa(l) { var w = totalWa(l); return w && n(l.price) ? n(l.price) / w : 0; }
   function locText(l) { return [l.subdistrict && 'ต.' + l.subdistrict, l.district && 'อ.' + l.district, l.province && 'จ.' + l.province].filter(Boolean).join(' '); }
   function code(l) { return '#' + String(l.id).padStart(4, '0'); }
+  function areaTip(l) { return deedNotation(l) + ' = ' + (fmt(l.rai) + ' ไร่ ' + fmt(l.ngan) + ' งาน ' + fmt(l.wa, 2) + ' ตารางวา') + ' · รวม ' + fmt(totalWa(l), 2) + ' ตร.ว. (' + fmt(totalWa(l) * 4, 2) + ' ตร.ม.)'; }
+  function perWaTip(l) { return 'ราคาเฉลี่ยต่อตารางวา = ราคารวม ' + fmt(l.price) + ' บาท ÷ ' + fmt(totalWa(l), 2) + ' ตร.ว.'; }
+  function info(text) { return '<span class="info" tabindex="0" role="button" aria-label="คำอธิบาย" data-tip="' + esc(text) + '">i</span>'; }
+  function fmtDate(iso, long) { return window.UI ? window.UI.fmtDate(iso, long) : (iso || ''); }
+
+  // ---------- skeleton ระหว่างรอโหลด ----------
+  function skCards(n) {
+    var one = '<div class="sk-card" aria-hidden="true"><span class="sk sk-img"></span><div class="sk-body">' +
+      '<span class="sk sk-line" style="width:85%;height:16px"></span><span class="sk sk-line" style="width:55%"></span>' +
+      '<span class="sk sk-line" style="width:40%"></span><span class="sk sk-line" style="width:35%;height:20px;margin-top:8px"></span></div></div>';
+    return new Array(n + 1).join(one);
+  }
+  function skHome() {
+    return '<header class="top"><div class="wrap"><span class="brand"><span class="sk" style="width:36px;height:36px;border-radius:9px"></span>' +
+      '<span style="display:grid;gap:6px"><span class="sk sk-line" style="width:120px;height:14px"></span><span class="sk sk-line" style="width:90px;height:10px"></span></span></span></div></header>' +
+      '<section class="sk-hero" aria-hidden="true"><div class="wrap" style="display:grid;gap:14px">' +
+      '<span class="sk" style="width:min(460px,80%);height:38px"></span><span class="sk sk-line" style="width:min(560px,90%)"></span>' +
+      '<span class="sk" style="width:100%;height:58px;border-radius:14px;margin-top:12px"></span></div></section>' +
+      '<section class="wrap" role="status" aria-label="กำลังโหลดประกาศ"><div class="bar"><span class="sk" style="width:min(520px,100%);height:34px"></span></div>' +
+      '<div class="grid">' + skCards(6) + '</div></section>';
+  }
+  function skTable(rows) {
+    var one = '<div class="sk-row" aria-hidden="true"><span class="sk" style="width:64px;height:44px;flex:none"></span>' +
+      '<span style="flex:1;display:grid;gap:8px"><span class="sk sk-line" style="width:60%"></span><span class="sk sk-line" style="width:35%;height:10px"></span></span>' +
+      '<span class="sk" style="width:110px;height:30px;flex:none"></span></div>';
+    return '<div class="tablewrap" role="status" aria-label="กำลังโหลดข้อมูล">' + new Array(rows + 1).join(one) + '</div>';
+  }
+
   function hasCoords(l) { return l.lat !== '' && l.lng !== '' && l.lat != null && l.lng != null && isFinite(Number(l.lat)) && isFinite(Number(l.lng)); }
   function safeHttps(u) { return /^https:\/\/[^\s"'<>]+$/i.test(u || '') ? u : ''; }
 
@@ -45,11 +85,11 @@
   function card(l, S) {
     var pw = perWa(l), show = S.showPrice !== false;
     return '<a class="card" href="#land-' + n(l.id) + '"><div class="thumb">' + cover(l) +
-      '<span class="chip ' + esc(l.status) + '">' + (STATUS[l.status] || '') + '</span>' +
-      (l.sample ? '<span class="tag">ตัวอย่าง</span>' : (l.featured ? '<span class="tag">แนะนำ</span>' : '')) + '</div>' +
+      '<span class="chip ' + esc(l.status) + '" data-tip="' + esc(STATUS_TIP[l.status] || '') + '">' + (STATUS[l.status] || '') + '</span>' +
+      (l.sample ? '<span class="tag" data-tip="ประกาศตัวอย่าง ผู้ดูแลลบได้จากหน้า Admin">ตัวอย่าง</span>' : (l.featured ? '<span class="tag" data-tip="ประกาศแนะนำจากเรา">แนะนำ</span>' : '')) + '</div>' +
       '<div class="card-b"><h3>' + esc(l.title) + '</h3><div class="loc">' + esc(locText(l) || '-') + '</div>' +
-      '<div class="deed"><span class="num">' + esc(deedNotation(l)) + '</span><span>ไร่-งาน-ตร.ว.</span>' + (l.type ? '<span>· ' + esc(l.type) + '</span>' : '') + '</div>' +
-      '<div class="price">' + (show ? '<b>' + priceShort(l.price) + '</b>' + (pw ? '<small class="num">' + fmt(pw) + ' บ./ตร.ว.</small>' : '') : '<b>สอบถามราคา</b>') + '</div></div></a>';
+      '<div class="deed"><span class="num has-tip" data-tip="' + esc(areaTip(l)) + '">' + esc(deedNotation(l)) + '</span><span>ไร่-งาน-ตร.ว.</span>' + (l.type ? '<span>· ' + esc(l.type) + '</span>' : '') + '</div>' +
+      '<div class="price">' + (show ? '<b>' + priceShort(l.price) + '</b>' + (pw ? '<small class="num has-tip" data-tip="' + esc(perWaTip(l)) + '">' + fmt(pw) + ' บ./ตร.ว.</small>' : '') : '<b>สอบถามราคา</b>') + '</div></div></a>';
   }
 
   function logo() {
@@ -80,7 +120,8 @@
   }
 
   window.BL = {
-    STATUS: STATUS, TYPES: TYPES, DEEDS: DEEDS, esc: esc, n: n, fmt: fmt, totalWa: totalWa, deedNotation: deedNotation,
+    STATUS: STATUS, STATUS_TIP: STATUS_TIP, DEED_TIP: DEED_TIP, TYPES: TYPES, DEEDS: DEEDS,
+    areaTip: areaTip, perWaTip: perWaTip, info: info, fmtDate: fmtDate, skCards: skCards, skHome: skHome, skTable: skTable, esc: esc, n: n, fmt: fmt, totalWa: totalWa, deedNotation: deedNotation,
     priceShort: priceShort, perWa: perWa, locText: locText, code: code, hasCoords: hasCoords, safeHttps: safeHttps,
     imgSrc: imgSrc, plotSvg: plotSvg, cover: cover, card: card, header: header, footer: footer, toast: toast
   };

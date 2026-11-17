@@ -138,7 +138,7 @@
       '<h2>เข้าสู่ระบบผู้ดูแล</h2>' +
       (err ? '<div class="note err">' + esc(err) + '</div>' : '') +
       '<p class="muted" style="margin:0">ข้อมูลเว็บเก็บอยู่ใน GitHub (<span class="num">' + esc(CFG.owner + '/' + CFG.repo) + '</span>) ใช้ GitHub Token เพื่อบันทึก</p>' +
-      '<label for="tok">GitHub Token<input id="tok" type="password" autocomplete="off" required placeholder="github_pat_..."></label>' +
+      '<label for="tok"><span class="lbl">GitHub Token' + B.info('รหัสที่ให้หน้านี้บันทึกข้อมูลลง GitHub ได้ ห้ามส่งให้คนอื่น') + '</span><input id="tok" type="password" autocomplete="off" required placeholder="github_pat_..."></label>' +
       '<label class="check"><input type="checkbox" id="remember"> จำไว้ในเครื่องนี้</label>' +
       '<button class="btn" type="submit"' + (ui.busy ? ' disabled' : '') + '>' + (ui.busy ? 'กำลังตรวจสอบ…' : 'เข้าสู่ระบบ') + '</button>' +
       '<details><summary>วิธีสร้าง Token (ทำครั้งเดียว)</summary><ol>' +
@@ -170,6 +170,7 @@
   }
 
   function render() {
+    if (token && ui.busy && !STATE) { app.innerHTML = page('<section class="wrap" style="padding-top:20px">' + B.skTable(5) + '</section>'); return; }
     if (!token || !STATE) { app.innerHTML = page(loginPage('')); return; }
     var lv = ui.live || {};
     var body = '<section class="wrap">' +
@@ -177,22 +178,23 @@
       (ui.error ? '<div class="note err" style="margin-top:16px">' + esc(ui.error) + '</div>' : '') +
       '<div class="tabs"><button class="btn ghost" data-tab="lands" aria-pressed="' + (ui.tab === 'lands') + '">ประกาศที่ดิน</button>' +
       '<button class="btn ghost" data-tab="site" aria-pressed="' + (ui.tab === 'site') + '">ตั้งค่าเว็บไซต์</button>' +
-      '<button class="btn ghost sm" data-reload>โหลดข้อมูลล่าสุด</button></div>' +
-      (ui.tab === 'site' ? siteForm() : (ui.edit ? landForm() : landTable())) + '</section>';
+      '<button class="btn ghost sm" data-reload data-tip="ดึงข้อมูลล่าสุดจาก GitHub (ถ้ามีคนแก้จากเครื่องอื่น)">โหลดข้อมูลล่าสุด</button></div>' +
+      (ui.loading ? B.skTable(5) : ui.tab === 'site' ? siteForm() : (ui.edit ? landForm() : landTable())) + '</section>';
     app.innerHTML = page(body);
     if (ui.edit) updateCalc();
   }
 
   function opts(list, cur, all) { return '<option value="">' + all + '</option>' + list.map(function (v) { return '<option' + (v === cur ? ' selected' : '') + '>' + esc(v) + '</option>'; }).join(''); }
-  function statusOpts(cur) { return Object.keys(B.STATUS).map(function (k) { return '<option value="' + k + '"' + (cur === k ? ' selected' : '') + '>' + B.STATUS[k] + '</option>'; }).join(''); }
+  function statusOpts(cur) { return Object.keys(B.STATUS).map(function (k) { return '<option data-dot="' + k + '" value="' + k + '"' + (cur === k ? ' selected' : '') + '>' + B.STATUS[k] + '</option>'; }).join(''); }
 
   function landTable() {
     var dis = ui.busy ? ' disabled' : '';
     var rows = STATE.lands.slice().sort(function (a, b) { return b.id - a.id; }).map(function (l) {
       return '<tr><td>' + B.cover(l) + '</td><td><b>' + esc(l.title) + '</b><br><small class="muted"><span class="num">' + B.code(l) + '</span> · ' + (l.images || []).length + ' รูป' + (l.featured ? ' · แนะนำ' : '') + (l.published ? '' : ' · ซ่อนอยู่') + (l.sample ? ' · ตัวอย่าง' : '') + '</small></td>' +
-        '<td>' + esc([l.district, l.province].filter(Boolean).join(', ') || '-') + '</td><td class="num">' + esc(B.deedNotation(l)) + '</td><td>' + B.priceShort(l.price) + '</td>' +
-        '<td><select data-status="' + l.id + '" aria-label="สถานะ"' + dis + '>' + statusOpts(l.status) + '</select></td>' +
-        '<td><div class="acts"><a class="btn ghost sm" href="./#land-' + l.id + '" target="_blank" rel="noopener">ดู</a><button class="btn sm" data-edit="' + l.id + '"' + dis + '>แก้ไข</button><button class="btn danger sm" data-del="' + l.id + '"' + dis + '>ลบ</button></div></td></tr>';
+        '<td>' + esc([l.district, l.province].filter(Boolean).join(', ') || '-') + '</td><td class="num"><span class="has-tip" data-tip="' + esc(B.areaTip(l)) + '">' + esc(B.deedNotation(l)) + '</span></td><td>' + B.priceShort(l.price) + '</td>' +
+        '<td><select data-status="' + l.id + '" aria-label="สถานะ" data-tip="เปลี่ยนสถานะแล้วบันทึกทันที"' + dis + '>' + statusOpts(l.status) + '</select>' +
+        (l.status === 'sold' && l.soldDate ? '<small class="muted" style="display:block;margin-top:4px">ขายเมื่อ ' + esc(B.fmtDate(l.soldDate)) + '</small>' : '') + '</td>' +
+        '<td><div class="acts"><a class="btn ghost sm" href="./#land-' + l.id + '" target="_blank" rel="noopener" data-tip="เปิดหน้าประกาศแบบที่ลูกค้าเห็น">ดู</a><button class="btn sm" data-edit="' + l.id + '"' + dis + '>แก้ไข</button><button class="btn danger sm" data-del="' + l.id + '" data-tip="กดสองครั้งเพื่อยืนยันการลบ"' + dis + '>ลบ</button></div></td></tr>';
     }).join('');
     return (ui.busy ? '<div class="note">กำลังบันทึกลง GitHub…</div>' : '') +
       '<div style="margin-bottom:14px"><button class="btn" data-edit="new"' + dis + '>+ เพิ่มประกาศที่ดิน</button></div>' +
@@ -201,15 +203,15 @@
       '<p class="muted" style="font-size:.9rem;padding-bottom:40px">ทุกการบันทึกจะเก็บลง GitHub และหน้าเว็บจะอัปเดตภายใน 1–2 นาที</p>';
   }
 
-  function blankLand() { return { id: null, title: '', type: '', deed: '', province: '', district: '', subdistrict: '', address: '', rai: 0, ngan: 0, wa: 0, price: 0, road: '', utilities: '', desc: '', lat: '', lng: '', status: 'available', featured: false, published: true, images: [] }; }
-  function field(id, label, v, extra) { return '<label for="' + id + '">' + label + '<input id="' + id + '" value="' + esc(v == null ? '' : v) + '" ' + (extra || '') + '></label>'; }
-  function sel(id, label, list, cur) { return '<label for="' + id + '">' + label + '<select id="' + id + '">' + opts(list, cur, '- เลือก -') + '</select></label>'; }
+  function blankLand() { return { id: null, title: '', type: '', deed: '', province: '', district: '', subdistrict: '', address: '', rai: 0, ngan: 0, wa: 0, price: 0, road: '', utilities: '', desc: '', lat: '', lng: '', status: 'available', featured: false, published: true, images: [], listed: today(), soldDate: '' }; }
+  function field(id, label, v, extra) { return '<label for="' + id + '"><span class="lbl">' + label + '</span><input id="' + id + '" value="' + esc(v == null ? '' : v) + '" ' + (extra || '') + '></label>'; }
+  function sel(id, label, list, cur) { return '<label for="' + id + '"><span class="lbl">' + label + '</span><select id="' + id + '">' + opts(list, cur, '- เลือก -') + '</select></label>'; }
 
   function landForm() {
     var d = ui.draft;
     var imgs = d.images.map(function (img, i) {
       return '<figure><img src="' + esc(B.imgSrc(img)) + '" alt="">' + (i === 0 ? '<span class="cover">รูปปก</span>' : '') + '<figcaption>' +
-        (i ? '<button type="button" class="btn ghost sm" data-cover="' + i + '">ตั้งเป็นปก</button>' : '') + '<button type="button" class="btn danger sm" data-rmimg="' + i + '">ลบ</button></figcaption></figure>';
+        (i ? '<button type="button" class="btn ghost sm" data-cover="' + i + '" data-tip="ใช้รูปนี้เป็นรูปแรกบนการ์ดประกาศ">ตั้งเป็นปก</button>' : '') + '<button type="button" class="btn danger sm" data-rmimg="' + i + '">ลบ</button></figcaption></figure>';
     }).join('');
     var mapPreview = B.hasCoords(d) ? '<iframe class="map" loading="lazy" title="ตัวอย่างแผนที่" src="https://maps.google.com/maps?q=' + n(d.lat).toFixed(6) + ',' + n(d.lng).toFixed(6) + '&z=15&output=embed"></iframe>' : '';
     return '<form class="formgrid" id="landform"><div class="form">' +
@@ -218,14 +220,14 @@
       '<div class="cols two">' + sel('l-type', 'ประเภทที่ดิน', B.TYPES, d.type) + sel('l-deed', 'เอกสารสิทธิ์', B.DEEDS, d.deed) + '</div></div>' +
       '<div class="panel form"><h2>ขนาดและราคา</h2><div class="cols">' +
       field('l-rai', 'ไร่', d.rai, 'type="number" min="0" step="1" data-calc') +
-      field('l-ngan', 'งาน (0–3)', d.ngan, 'type="number" min="0" max="3" step="1" data-calc') +
-      field('l-wa', 'ตารางวา (0–99)', d.wa, 'type="number" min="0" max="99.99" step="0.01" data-calc') + '</div>' +
-      field('l-price', 'ราคาขายรวม (บาท)', d.price || '', 'type="number" min="0" step="1" placeholder="เว้นว่าง = สอบถามราคา" data-calc') +
+      field('l-ngan', 'งาน (0–3)' + B.info('1 งาน = 100 ตารางวา · 4 งาน = 1 ไร่') + '', d.ngan, 'type="number" min="0" max="3" step="1" data-calc') +
+      field('l-wa', 'ตารางวา (0–99)' + B.info('ใส่เศษที่ไม่ถึง 1 งาน เช่น 50 หรือ 30.5 ถ้าเกิน 100 ให้ปัดขึ้นเป็นงาน') + '', d.wa, 'type="number" min="0" max="99.99" step="0.01" data-calc') + '</div>' +
+      field('l-price', 'ราคาขายรวม (บาท)' + B.info('ราคาทั้งแปลง ระบบคำนวณราคาต่อตารางวาและต่อไร่ให้เอง') + '', d.price || '', 'type="number" min="0" step="1" placeholder="เว้นว่าง = สอบถามราคา" data-calc') +
       '<div class="calc" id="calc" aria-live="polite"></div></div>' +
       '<div class="panel form"><h2>ที่ตั้ง</h2><div class="cols">' +
       field('l-province', 'จังหวัด', d.province) + field('l-district', 'อำเภอ/เขต', d.district) + field('l-subdistrict', 'ตำบล/แขวง', d.subdistrict) + '</div>' +
       field('l-address', 'ถนน / ซอย / จุดสังเกต', d.address) +
-      '<label for="l-gmaps">พิกัดจาก Google Maps<span class="hint">วางลิงก์ Google Maps หรือพิกัดแบบ 13.7563, 100.5018 แล้วระบบจะแยกละติจูด/ลองจิจูดให้</span><input id="l-gmaps" placeholder="วางลิงก์หรือพิกัดที่นี่"></label>' +
+      '<label for="l-gmaps"><span class="lbl">พิกัดจาก Google Maps' + B.info('ใน Google Maps กดค้างที่ตำแหน่งที่ดิน แล้วคัดลอกตัวเลขพิกัดหรือแชร์ลิงก์มาวาง') + '</span><span class="hint">วางลิงก์ Google Maps หรือพิกัดแบบ 13.7563, 100.5018 แล้วระบบจะแยกละติจูด/ลองจิจูดให้</span><input id="l-gmaps" placeholder="วางลิงก์หรือพิกัดที่นี่"></label>' +
       '<div class="cols two">' + field('l-lat', 'ละติจูด', d.lat, 'type="number" step="any"') + field('l-lng', 'ลองจิจูด', d.lng, 'type="number" step="any"') + '</div>' +
       '<div id="mappreview">' + mapPreview + '</div></div>' +
       '<div class="panel form"><h2>รายละเอียดเพิ่มเติม</h2>' +
@@ -236,8 +238,10 @@
       (imgs ? '<div class="imgs">' + imgs + '</div>' : '<p class="muted" style="margin:0">ยังไม่มีรูป หน้าเว็บจะแสดงผังแปลงแทน</p>') + '</div>' +
       '</div><div><div class="panel form contact"><h2>การเผยแพร่</h2>' +
       '<label for="l-status">สถานะ<select id="l-status">' + statusOpts(d.status) + '</select></label>' +
-      '<label class="check"><input type="checkbox" id="l-published"' + (d.published ? ' checked' : '') + '> แสดงบนหน้าเว็บ</label>' +
-      '<label class="check"><input type="checkbox" id="l-featured"' + (d.featured ? ' checked' : '') + '> ประกาศแนะนำ (ขึ้นก่อน)</label>' +
+      '<label for="l-listed"><span class="lbl">วันที่ลงประกาศ</span><input type="hidden" id="l-listed" value="' + esc(d.listed || d.updated || '') + '" data-datepicker data-label="วันที่ลงประกาศ"></label>' +
+      '<label for="l-soldDate" id="sold-wrap"' + (d.status === 'sold' ? '' : ' hidden') + '><span class="lbl">วันที่ขายได้' + B.info('ใส่อัตโนมัติเป็นวันนี้เมื่อเปลี่ยนสถานะเป็นขายแล้ว แก้ได้') + '</span><input type="hidden" id="l-soldDate" value="' + esc(d.soldDate || '') + '" data-datepicker data-clearable data-label="วันที่ขายได้" data-placeholder="ยังไม่ระบุ"></label>' +
+      '<label class="check"><input type="checkbox" id="l-published"' + (d.published ? ' checked' : '') + '> แสดงบนหน้าเว็บ' + B.info('เอาติ๊กออกเพื่อซ่อนประกาศจากลูกค้า แต่ยังเก็บไว้ในหน้านี้') + '</label>' +
+      '<label class="check"><input type="checkbox" id="l-featured"' + (d.featured ? ' checked' : '') + '> ประกาศแนะนำ' + B.info('ขึ้นก่อนประกาศอื่นและมีป้าย แนะนำ บนการ์ด') + '</label>' +
       '<button class="btn" type="submit"' + (ui.busy ? ' disabled' : '') + '>' + (ui.busy ? 'กำลังบันทึก…' : 'บันทึกและเผยแพร่') + '</button>' +
       '<button class="btn ghost" type="button" data-cancel' + (ui.busy ? ' disabled' : '') + '>ยกเลิก</button></div></div></form>';
   }
@@ -252,7 +256,7 @@
       '<div class="panel form"><h2>ช่องทางติดต่อ</h2><div class="cols two">' +
       field('s-phone', 'เบอร์โทร', S.phone) + field('s-line', 'LINE ID', S.line, 'placeholder="@yourline"') +
       field('s-email', 'อีเมล', S.email, 'type="email"') + field('s-facebook', 'ลิงก์ Facebook', S.facebook, 'type="url" placeholder="https://facebook.com/..."') + '</div>' +
-      field('s-formUrl', 'ลิงก์ฟอร์มสอบถาม (ถ้ามี เช่น Google Form)', S.formUrl, 'type="url" placeholder="https://forms.gle/..."') +
+      field('s-formUrl', 'ลิงก์ฟอร์มสอบถาม (ถ้ามี เช่น Google Form)' + B.info('ลูกค้ากดปุ่ม กรอกฟอร์มสอบถาม แล้วคำตอบจะไปอยู่ใน Google Sheets ของคุณแบบส่วนตัว') + '', S.formUrl, 'type="url" placeholder="https://forms.gle/..."') +
       field('s-address', 'ที่อยู่สำนักงาน', S.address) + '</div></div>' +
       '<div><div class="panel form contact"><h2>การแสดงผล</h2>' +
       '<label class="check"><input type="checkbox" id="s-showPrice"' + (S.showPrice !== false ? ' checked' : '') + '> แสดงราคาบนหน้าเว็บ</label>' +
@@ -272,6 +276,8 @@
     d.road = val('l-road'); d.utilities = val('l-utilities');
     d.desc = document.getElementById('l-desc').value.slice(0, 8000);
     d.status = B.STATUS[val('l-status')] ? val('l-status') : 'available';
+    d.listed = val('l-listed'); d.soldDate = val('l-soldDate');
+    if (d.status === 'sold' && !d.soldDate) d.soldDate = today();
     d.published = document.getElementById('l-published').checked; d.featured = document.getElementById('l-featured').checked;
   }
   function updateCalc() {
@@ -334,13 +340,17 @@
     var t = e.target;
     if (t.dataset.status) {
       var next = cloneState(), lid = Number(t.dataset.status);
-      next.lands.forEach(function (l) { if (l.id === lid) { l.status = t.value; l.updated = today(); } });
+      next.lands.forEach(function (l) { if (l.id === lid) { l.status = t.value; l.updated = today(); if (t.value === 'sold' && !l.soldDate) l.soldDate = today(); } });
       save(next, 'เปลี่ยนสถานะแล้ว', 'Set ' + B.code({ id: lid }) + ' status to ' + t.value);
     } else if (t.id === 'l-files' && t.files && t.files.length) {
       readDraft();
       var files = Array.prototype.slice.call(t.files).filter(function (f) { return /^image\//.test(f.type); });
       Promise.all(files.map(shrink)).then(function (list) { ui.draft.images = ui.draft.images.concat(list); render(); },
         function () { ui.error = 'มีรูปที่อ่านไม่ได้ ลองใช้ไฟล์ JPG หรือ PNG'; render(); });
+    } else if (t.id === 'l-status') {
+      var sw = document.getElementById('sold-wrap'), sd = document.getElementById('l-soldDate');
+      if (sw) sw.hidden = t.value !== 'sold';
+      if (t.value === 'sold' && sd && !sd.value) { sd.value = today(); window.UI.syncDate(sd); }
     } else if (t.id === 'l-lat' || t.id === 'l-lng') {
       readDraft(); var mp = document.getElementById('mappreview'); if (mp) { var d = ui.draft; mp.innerHTML = B.hasCoords(d) ? '<iframe class="map" loading="lazy" title="ตัวอย่างแผนที่" src="https://maps.google.com/maps?q=' + n(d.lat).toFixed(6) + ',' + n(d.lng).toFixed(6) + '&z=15&output=embed"></iframe>' : ''; }
     }
@@ -360,7 +370,7 @@
   app.addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b || b.disabled) return;
     if (b.hasAttribute('data-logout')) { logout(); STATE = null; render(); return; }
-    if (b.hasAttribute('data-reload')) { ui.error = ''; loadData().then(function () { ui.edit = false; render(); B.toast('โหลดข้อมูลล่าสุดแล้ว'); }, function (er) { ui.error = 'โหลดข้อมูลไม่สำเร็จ: ' + er.message; render(); }); return; }
+    if (b.hasAttribute('data-reload')) { ui.error = ''; ui.loading = true; ui.edit = false; render(); loadData().then(function () { ui.loading = false; render(); B.toast('โหลดข้อมูลล่าสุดแล้ว'); }, function (er) { ui.loading = false; ui.error = 'โหลดข้อมูลไม่สำเร็จ: ' + er.message; render(); }); return; }
     if (b.dataset.tab) { ui.tab = b.dataset.tab; ui.edit = false; ui.error = ''; render(); return; }
     if (b.dataset.edit) {
       ui.edit = true; ui.error = '';

@@ -41,7 +41,7 @@
 
   function render() {
     var r = route();
-    var nav = '<a class="btn ghost sm" href="#">ประกาศทั้งหมด</a>' + (S.phone ? '<span class="btn sm num">โทร ' + esc(S.phone) + '</span>' : '');
+    var nav = '<a class="btn ghost sm" href="#">ประกาศทั้งหมด</a>' + (S.phone ? '<a class="btn sm num" href="tel:' + esc(String(S.phone).replace(/[^0-9+]/g, '')) + '" data-tip="กดเพื่อโทรหาเรา">โทร ' + esc(S.phone) + '</a>' : '');
     document.title = (r.view === 'land' && findLand(r.id) ? findLand(r.id).title + ' | ' : '') + S.siteName;
     app.innerHTML = B.header(S, nav) + (r.view === 'land' ? landPage(r.id) : homePage()) + B.footer(S);
     if (r.view === 'home') drawContours();
@@ -65,7 +65,7 @@
   function resultsHtml() {
     var list = filtered();
     var bar = '<div class="bar">' +
-      '<label>สถานะ <select id="f-status"><option value="">ทั้งหมด</option>' + Object.keys(B.STATUS).map(function (k) { return '<option value="' + k + '"' + (ui.status === k ? ' selected' : '') + '>' + B.STATUS[k] + '</option>'; }).join('') + '</select></label>' +
+      '<label>สถานะ <select id="f-status"><option value="">ทั้งหมด</option>' + Object.keys(B.STATUS).map(function (k) { return '<option data-dot="' + k + '" value="' + k + '"' + (ui.status === k ? ' selected' : '') + '>' + B.STATUS[k] + '</option>'; }).join('') + '</select></label>' +
       '<label>ราคา (ล้าน) <input id="f-minP" type="number" min="0" step="0.1" placeholder="ต่ำสุด" value="' + esc(ui.minP) + '"> – <input id="f-maxP" type="number" min="0" step="0.1" placeholder="สูงสุด" value="' + esc(ui.maxP) + '"></label>' +
       '<label>ขนาด (ไร่) <input id="f-minR" type="number" min="0" step="0.25" placeholder="ต่ำสุด" value="' + esc(ui.minR) + '"> – <input id="f-maxR" type="number" min="0" step="0.25" placeholder="สูงสุด" value="' + esc(ui.maxR) + '"></label>' +
       '<label>เรียง <select id="f-sort">' + [['new', 'แนะนำ/ล่าสุด'], ['p-asc', 'ราคาต่ำ → สูง'], ['p-desc', 'ราคาสูง → ต่ำ'], ['a-desc', 'ขนาดใหญ่ → เล็ก'], ['a-asc', 'ขนาดเล็ก → ใหญ่']].map(function (o) { return '<option value="' + o[0] + '"' + (ui.sort === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></label>' +
@@ -75,7 +75,7 @@
   }
 
   function contactRow(label, value) {
-    return '<div class="row"><div><small>' + label + '</small><b>' + esc(value) + '</b></div><button class="btn ghost sm" data-copy="' + esc(value) + '">คัดลอก</button></div>';
+    return '<div class="row"><div><small>' + label + '</small><b>' + esc(value) + '</b></div><button class="btn ghost sm" data-copy="' + esc(value) + '" data-tip="คัดลอก' + esc(label) + 'ไปวางในแอปอื่น">คัดลอก</button></div>';
   }
 
   function landPage(id) {
@@ -85,9 +85,10 @@
     var pw = B.perWa(l), w = B.totalWa(l), show = S.showPrice !== false;
     var gal = '<div class="gal-main" id="gal-main">' + (imgs.length ? '<img src="' + esc(imgs[0]) + '" alt="' + esc(l.title) + '">' : B.plotSvg(l)) + '</div>';
     if (imgs.length > 1) gal += '<div class="gal-thumbs">' + imgs.map(function (s, i) { return '<button type="button" data-gal="' + esc(s) + '" aria-current="' + (i === 0) + '" aria-label="รูปที่ ' + (i + 1) + '"><img src="' + esc(s) + '" alt="" loading="lazy"></button>'; }).join('') + '</div>';
-    var rows = [['รหัสประกาศ', B.code(l)], ['ประเภทที่ดิน', l.type], ['เอกสารสิทธิ์', l.deed], ['จังหวัด', l.province], ['อำเภอ/เขต', l.district], ['ตำบล/แขวง', l.subdistrict], ['ที่ตั้ง/ถนน', l.address], ['ทางเข้า-ออก', l.road], ['สาธารณูปโภค', l.utilities]]
+    var listed = l.listed || l.updated;
+    var rows = [['รหัสประกาศ', B.code(l)], ['ประเภทที่ดิน', l.type], ['เอกสารสิทธิ์', l.deed, B.DEED_TIP[l.deed]], ['จังหวัด', l.province], ['อำเภอ/เขต', l.district], ['ตำบล/แขวง', l.subdistrict], ['ที่ตั้ง/ถนน', l.address], ['ทางเข้า-ออก', l.road], ['สาธารณูปโภค', l.utilities], ['ลงประกาศเมื่อ', listed ? B.fmtDate(listed, true) : '']]
       .filter(function (r, i) { return i < 6 || r[1]; })
-      .map(function (r) { return '<tr><th>' + r[0] + '</th><td>' + esc(r[1] || '-') + '</td></tr>'; }).join('');
+      .map(function (r) { return '<tr><th>' + r[0] + '</th><td>' + esc(r[1] || '-') + (r[2] ? B.info(r[2]) : '') + '</td></tr>'; }).join('');
     var map = '';
     if (B.hasCoords(l)) {
       var ll = n(l.lat).toFixed(6) + ',' + n(l.lng).toFixed(6);
@@ -103,13 +104,13 @@
       '</aside>';
     var related = visible().filter(function (x) { return x.id !== l.id && x.province === l.province && x.status !== 'sold'; }).slice(0, 3);
     return '<section class="wrap"><nav class="crumbs"><a href="#">ประกาศทั้งหมด</a>' + (l.province ? ' / ' + esc(l.province) : '') + ' / <span class="num">' + B.code(l) + '</span></nav>' +
-      '<div class="dhead"><div><span class="chip static ' + esc(l.status) + '">' + (B.STATUS[l.status] || '') + '</span>' + (l.sample ? ' <span class="muted">· ประกาศตัวอย่าง</span>' : '') +
+      '<div class="dhead"><div><span class="chip static ' + esc(l.status) + '" data-tip="' + esc(B.STATUS_TIP[l.status] || '') + '">' + (B.STATUS[l.status] || '') + '</span>' + (l.sample ? ' <span class="muted">· ประกาศตัวอย่าง</span>' : '') +
       '<h1>' + esc(l.title) + '</h1><div class="muted">' + esc(B.locText(l) || '-') + (l.address ? ' · ' + esc(l.address) : '') + '</div></div>' +
-      '<div class="dprice">' + (show ? '<b>' + (n(l.price) ? fmt(l.price) + ' บาท' : 'สอบถามราคา') + '</b>' + (pw ? '<small class="num">' + fmt(pw) + ' บ./ตร.ว. · ' + fmt(pw * 400) + ' บ./ไร่</small>' : '') : '<b>สอบถามราคา</b>') + '</div></div>' +
+      '<div class="dprice">' + (show ? '<b>' + (n(l.price) ? fmt(l.price) + ' บาท' : 'สอบถามราคา') + '</b>' + (pw ? '<small class="num has-tip" data-tip="' + esc(B.perWaTip(l)) + '">' + fmt(pw) + ' บ./ตร.ว. · ' + fmt(pw * 400) + ' บ./ไร่</small>' : '') : '<b>สอบถามราคา</b>') + '</div></div>' +
       '<div class="dgrid"><div>' + gal +
-      '<div class="panel" style="margin-top:20px"><h2>ขนาดที่ดิน</h2><div class="area">' +
-      '<div><b>' + fmt(l.rai) + '</b><span>ไร่</span></div><div><b>' + fmt(l.ngan) + '</b><span>งาน</span></div><div><b>' + fmt(l.wa, 2) + '</b><span>ตารางวา</span></div>' +
-      '<div><b>' + fmt(w, 2) + '</b><span>ตร.ว. รวม · ' + fmt(w * 4, 2) + ' ตร.ม.</span></div></div><table class="spec">' + rows + '</table></div>' +
+      '<div class="panel" style="margin-top:20px"><h2>ขนาดที่ดิน' + B.info('1 ไร่ = 4 งาน = 400 ตารางวา · 1 งาน = 100 ตารางวา · 1 ตารางวา = 4 ตารางเมตร') + '</h2><div class="area">' +
+      '<div data-tip="1 ไร่ = 400 ตร.ว. = 1,600 ตร.ม."><b>' + fmt(l.rai) + '</b><span>ไร่</span></div><div data-tip="1 งาน = 100 ตร.ว. = 400 ตร.ม."><b>' + fmt(l.ngan) + '</b><span>งาน</span></div><div data-tip="1 ตารางวา = 4 ตร.ม. (2 × 2 เมตร)"><b>' + fmt(l.wa, 2) + '</b><span>ตารางวา</span></div>' +
+      '<div data-tip="' + esc(B.areaTip(l)) + '"><b>' + fmt(w, 2) + '</b><span>ตร.ว. รวม · ' + fmt(w * 4, 2) + ' ตร.ม.</span></div></div><table class="spec">' + rows + '</table></div>' +
       (l.desc ? '<div class="panel"><h2>รายละเอียด</h2><div class="desc">' + esc(l.desc) + '</div></div>' : '') + map +
       '</div>' + contact + '</div>' +
       (related.length ? '<h2 style="margin-bottom:14px">ที่ดินอื่นใน' + esc(l.province) + '</h2><div class="grid">' + related.map(function (x) { return B.card(x, S); }).join('') + '</div>' : '') +
@@ -150,7 +151,7 @@
   app.addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return;
     if (b.dataset.gal) {
-      document.getElementById('gal-main').innerHTML = '<img src="' + esc(b.dataset.gal) + '" alt="">';
+      var gm = document.getElementById('gal-main'); gm.innerHTML = '<img src="' + esc(b.dataset.gal) + '" alt="">'; window.UI && window.UI.enhance(gm);
       Array.prototype.forEach.call(document.querySelectorAll('.gal-thumbs button'), function (x) { x.setAttribute('aria-current', String(x === b)); });
     } else if (b.dataset.copy) {
       var done = function () { b.textContent = 'คัดลอกแล้ว'; setTimeout(function () { b.textContent = 'คัดลอก'; }, 1500); };
@@ -179,7 +180,7 @@
       })
       .catch(function () { loading = false; if (first) app.innerHTML = '<div class="loading">โหลดข้อมูลไม่สำเร็จ กรุณารีเฟรชหน้าอีกครั้ง</div>'; });
   }
-  app.innerHTML = '<div class="loading">กำลังโหลดประกาศ…</div>';
+  app.innerHTML = B.skHome();
   load(true);
   document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible' && STATE) load(false); });
   window.addEventListener('pageshow', function (e) { if (e.persisted && STATE) load(false); });
