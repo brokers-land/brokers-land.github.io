@@ -133,32 +133,92 @@
   function setToken(t, remember) { try { sessionStorage.setItem(TOKEN_KEY, t); if (remember) localStorage.setItem(TOKEN_KEY, t); } catch (e) {} }
   function logout() { token = ''; try { sessionStorage.removeItem(TOKEN_KEY); localStorage.removeItem(TOKEN_KEY); } catch (e) {} }
 
+  // ---------- หน้าเข้าสู่ระบบ ----------
+  var ICON = {
+    key: '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><circle cx="7" cy="12" r="3.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9.6 9.4L16.5 2.5M13.5 5.5l2 2M15.5 3.5l1.8 1.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
+    eye: '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="M1.5 10S4.5 4 10 4s8.5 6 8.5 6-3 6-8.5 6-8.5-6-8.5-6z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="10" cy="10" r="2.6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>',
+    eyeOff: '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="M3 3l14 14M8.2 4.3A8.6 8.6 0 0110 4c5.5 0 8.5 6 8.5 6a14 14 0 01-2.6 3.3M5.2 6.1A14 14 0 001.5 10s3 6 8.5 6a8 8 0 003.3-.7M8.2 8.3a2.6 2.6 0 003.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
+    alert: '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 6v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="14" r="1.1" fill="currentColor"/></svg>',
+    plot: '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 18L7 5l13 3-2 12z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-dasharray="3 2"/><rect x="5.5" y="3.5" width="3" height="3" fill="currentColor"/><rect x="16.5" y="18.5" width="3" height="3" fill="currentColor"/></svg>',
+    tag: '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M3 12V4h8l10 10-8 8z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="7.5" cy="8.5" r="1.6" fill="currentColor"/></svg>',
+    bolt: '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>',
+    ext: '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M6 3H3v10h10v-3M9 2h5v5M14 2L7 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+  };
+  var pub = null; // ชื่อเว็บจากหน้าเว็บจริง (ใช้แสดงในหน้าเข้าสู่ระบบ)
+
   function loginPage(err) {
-    return '<div class="wrap"><form class="panel form login" id="loginform">' +
-      '<h2>เข้าสู่ระบบผู้ดูแล</h2>' +
-      (err ? '<div class="note err">' + esc(err) + '</div>' : '') +
-      '<p class="muted" style="margin:0">ข้อมูลเว็บเก็บอยู่ใน GitHub (<span class="num">' + esc(CFG.owner + '/' + CFG.repo) + '</span>) ใช้ GitHub Token เพื่อบันทึก</p>' +
-      '<label for="tok"><span class="lbl">GitHub Token' + B.info('รหัสที่ให้หน้านี้บันทึกข้อมูลลง GitHub ได้ ห้ามส่งให้คนอื่น') + '</span><input id="tok" type="password" autocomplete="off" required placeholder="github_pat_..."></label>' +
-      '<label class="check"><input type="checkbox" id="remember"> จำไว้ในเครื่องนี้</label>' +
-      '<button class="btn" type="submit"' + (ui.busy ? ' disabled' : '') + '>' + (ui.busy ? 'กำลังตรวจสอบ…' : 'เข้าสู่ระบบ') + '</button>' +
-      '<details><summary>วิธีสร้าง Token (ทำครั้งเดียว)</summary><ol>' +
-      '<li>เปิด <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub → Fine-grained token</a></li>' +
-      '<li>Repository access: เลือก <b>Only select repositories</b> → <code>' + esc(CFG.repo) + '</code></li>' +
-      '<li>Permissions → Repository permissions → <b>Contents: Read and write</b></li>' +
-      '<li>กด Generate token แล้วคัดลอกมาวางด้านบน</li></ol></details>' +
-      '<a href="./">← กลับหน้าเว็บ</a></form></div>';
+    var name = (pub && pub.siteName) || 'Brokers Land', tagline = (pub && pub.tagline) || 'นายหน้าซื้อขายที่ดิน';
+    var busy = ui.loginBusy;
+    var steps = [
+      ['เปิดหน้าสร้าง Token บน GitHub', 'กดปุ่มด้านล่าง แล้วตั้งชื่ออะไรก็ได้ เช่น brokers-land-admin'],
+      ['Resource owner เลือก <b>' + esc(CFG.owner) + '</b>', 'ถ้ายังเป็นชื่อบัญชีส่วนตัว Token จะใช้กับเว็บนี้ไม่ได้'],
+      ['Repository access เลือก <b>Only select repositories</b>', 'แล้วเลือก <code>' + esc(CFG.repo) + '</code>'],
+      ['Permissions เลือก <b>Contents: Read and write</b>', 'จากนั้นกด Generate token แล้วคัดลอกมาวาง']
+    ];
+    return '<div class="auth">' +
+      '<aside class="auth-side"><canvas id="auth-contours" aria-hidden="true"></canvas><div class="auth-side-in">' +
+        '<a class="auth-brand" href="./"><span class="auth-logo">' + ICON.plot + '</span><span><b>' + esc(name) + '</b><small>' + esc(tagline) + '</small></span></a>' +
+        '<div class="auth-pitch"><span class="auth-eyebrow">ระบบผู้ดูแล</span><h1>จัดการประกาศที่ดิน<br>ได้จากทุกที่</h1>' +
+        '<ul class="auth-feats">' +
+          '<li><span>' + ICON.plot + '</span><div><b>ลงประกาศพร้อมรูปและพิกัด</b><small>ใส่ขนาดเป็นไร่-งาน-ตร.ว. ระบบคิดราคาต่อตารางวาให้</small></div></li>' +
+          '<li><span>' + ICON.tag + '</span><div><b>อัปเดตสถานะในคลิกเดียว</b><small>พร้อมขาย · ติดจอง · ขายแล้ว พร้อมวันที่ขาย</small></div></li>' +
+          '<li><span>' + ICON.bolt + '</span><div><b>ลูกค้าเห็นภายใน 1–2 นาที</b><small>บันทึกลง GitHub แล้วหน้าเว็บอัปเดตเอง</small></div></li>' +
+        '</ul></div>' +
+        '<div class="auth-repo">เชื่อมกับ <span class="num">' + esc(CFG.owner + '/' + CFG.repo) + '</span></div>' +
+      '</div></aside>' +
+      '<main class="auth-main"><form class="auth-card" id="loginform" novalidate>' +
+        '<div class="auth-head"><h2>เข้าสู่ระบบ</h2><p>วาง GitHub Token เพื่อแก้ไขข้อมูลบนเว็บ</p></div>' +
+        (err ? '<div class="auth-err" role="alert">' + ICON.alert + '<span>' + esc(err) + '</span></div>' : '') +
+        '<label class="auth-label" for="tok">GitHub Token' + B.info('รหัสที่อนุญาตให้หน้านี้บันทึกข้อมูลลง GitHub ห้ามส่งให้คนอื่น') + '</label>' +
+        '<div class="auth-input' + (err ? ' invalid' : '') + '">' + ICON.key +
+          '<input id="tok" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="github_pat_…" value="' + esc(ui.loginDraft || '') + '"' + (busy ? ' disabled' : '') + (err ? ' aria-invalid="true"' : '') + '>' +
+          '<button type="button" class="auth-eye" data-eye aria-label="แสดง Token" data-tip="แสดง / ซ่อน Token">' + ICON.eye + '</button>' +
+        '</div>' +
+        '<label class="auth-switch"><input type="checkbox" id="remember"' + (ui.loginRemember ? ' checked' : '') + '><span class="sw" aria-hidden="true"></span>' +
+          '<span><b>จำไว้ในเครื่องนี้</b><small>ครั้งหน้าเข้าได้เลย · ใช้เฉพาะเครื่องส่วนตัว</small></span></label>' +
+        '<button class="btn auth-submit" type="submit"' + (busy ? ' disabled aria-busy="true"' : '') + '>' + (busy ? '<span class="spin" aria-hidden="true"></span>กำลังตรวจสอบ…' : 'เข้าสู่ระบบ') + '</button>' +
+        '<details class="auth-help"' + (ui.helpOpen ? ' open' : '') + '><summary>ยังไม่มี Token? ดูวิธีสร้าง (ทำครั้งเดียว)</summary>' +
+          '<ol class="auth-steps">' + steps.map(function (st) { return '<li><b>' + st[0] + '</b><small>' + st[1] + '</small></li>'; }).join('') + '</ol>' +
+          '<a class="btn ghost auth-gh" href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">สร้าง Token บน GitHub ' + ICON.ext + '</a>' +
+        '</details>' +
+        '<a class="auth-back" href="./">← กลับหน้าเว็บ</a>' +
+      '</form></main></div>';
   }
 
-  function tryLogin(t) {
-    token = t; ui.busy = true; render();
+  function drawAuthContours() {
+    var c = document.getElementById('auth-contours'); if (!c) return;
+    var w = c.clientWidth, h = c.clientHeight, dpr = Math.min(window.devicePixelRatio || 1, 2);
+    c.width = w * dpr; c.height = h * dpr;
+    var g = c.getContext('2d'); g.scale(dpr, dpr); g.strokeStyle = 'rgba(255,255,255,.14)';
+    var cx = w * 0.85, cy = h * 0.82;
+    for (var k = 1; k <= 26; k++) {
+      g.beginPath();
+      for (var a = 0; a <= Math.PI * 2 + 0.01; a += 0.06) {
+        var rr = k * 24 * (1 + 0.16 * Math.sin(a * 3 + k * 0.5) + 0.07 * Math.cos(a * 5 - k * 0.3));
+        var x = cx + Math.cos(a) * rr * 1.4, y = cy + Math.sin(a) * rr;
+        if (a === 0) g.moveTo(x, y); else g.lineTo(x, y);
+      }
+      g.stroke();
+    }
+  }
+  window.addEventListener('resize', drawAuthContours);
+  fetch('data/site.json?v=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
+    pub = d.settings; if (!STATE && document.getElementById('loginform') && !ui.loginBusy) render();
+  }).catch(function () {});
+
+  function tryLogin(t, manual) {
+    token = t; ui.busy = true; ui.loginBusy = !!manual; ui.loginError = ''; render();
     return gh('GET', repoPath).then(function (repo) {
       if (!repo.permissions || !repo.permissions.push) { var e = new Error('no push'); e.status = 403; throw e; }
       if (!CFG.branch) CFG.branch = repo.default_branch;
       return loadData();
-    }).then(function () { ui.busy = false; render(); return true; }, function (err) {
-      ui.busy = false; logout();
-      var msg = err.status === 401 ? 'Token ไม่ถูกต้องหรือหมดอายุ' : (err.status === 403 || err.status === 404) ? 'Token นี้ไม่มีสิทธิ์เขียนลง ' + CFG.owner + '/' + CFG.repo : 'เชื่อมต่อ GitHub ไม่สำเร็จ: ' + err.message;
-      app.innerHTML = page(loginPage(msg)); return false;
+    }).then(function () { ui.busy = false; ui.loginBusy = false; ui.loginDraft = ''; render(); return true; }, function (err) {
+      ui.busy = false; ui.loginBusy = false; logout();
+      ui.loginError = err.status === 401 ? 'Token ไม่ถูกต้องหรือหมดอายุ ลองคัดลอกใหม่ให้ครบ หรือสร้าง Token ใหม่'
+        : (err.status === 403 || err.status === 404) ? 'Token นี้ยังไม่มีสิทธิ์แก้ไข ' + CFG.owner + '/' + CFG.repo + ' ตรวจว่าเลือก Resource owner เป็น ' + CFG.owner + ' และเปิด Contents: Read and write แล้ว'
+        : 'เชื่อมต่อ GitHub ไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วลองอีกครั้ง';
+      render(); var f = document.getElementById('tok'); if (f) f.focus();
+      return false;
     });
   }
 
@@ -170,8 +230,9 @@
   }
 
   function render() {
-    if (token && ui.busy && !STATE) { app.innerHTML = page('<section class="wrap" style="padding-top:20px">' + B.skTable(5) + '</section>'); return; }
-    if (!token || !STATE) { app.innerHTML = page(loginPage('')); return; }
+    if (token && ui.busy && !STATE && !ui.loginBusy) { app.innerHTML = page('<section class="wrap" style="padding-top:20px">' + B.skTable(5) + '</section>'); return; }
+    if (!token || !STATE || ui.loginBusy) { document.body.classList.add('is-auth'); app.innerHTML = loginPage(ui.loginError); drawAuthContours(); return; }
+    document.body.classList.remove('is-auth');
     var lv = ui.live || {};
     var body = '<section class="wrap">' +
       '<div id="live" class="note' + (lv.state === 'err' ? ' err' : '') + '" style="margin-top:16px"' + (lv.text ? '' : ' hidden') + '>' + esc(lv.text || '') + '</div>' +
@@ -313,7 +374,11 @@
     var id = e.target.id;
     if (id === 'loginform') {
       var t = val('tok'), remember = document.getElementById('remember').checked;
-      tryLogin(t).then(function (ok) { if (ok) setToken(t, remember); });
+      ui.loginDraft = t; ui.loginRemember = remember;
+      var hd = document.querySelector('.auth-help'); ui.helpOpen = !!(hd && hd.open);
+      if (!t) { ui.loginError = 'กรุณาวาง GitHub Token ก่อนกดเข้าสู่ระบบ'; render(); document.getElementById('tok').focus(); return; }
+      if (!/^(github_pat_|ghp_|gho_|ghu_)[A-Za-z0-9_]{20,}$/.test(t)) { ui.loginError = 'รูปแบบ Token ไม่ถูกต้อง Token ของ GitHub ขึ้นต้นด้วย github_pat_ ลองคัดลอกใหม่ให้ครบ'; render(); document.getElementById('tok').focus(); return; }
+      tryLogin(t, true).then(function (ok) { if (ok) setToken(t, remember); });
     } else if (id === 'landform') {
       readDraft(); var d = ui.draft;
       if (!d.title) { ui.error = 'กรุณากรอกชื่อประกาศ'; render(); return; }
@@ -369,7 +434,12 @@
 
   app.addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b || b.disabled) return;
-    if (b.hasAttribute('data-logout')) { logout(); STATE = null; render(); return; }
+    if (b.hasAttribute('data-eye')) {
+      var inp = document.getElementById('tok'), show = inp.type === 'password';
+      inp.type = show ? 'text' : 'password';
+      b.innerHTML = show ? ICON.eyeOff : ICON.eye; b.setAttribute('aria-label', show ? 'ซ่อน Token' : 'แสดง Token'); inp.focus(); return;
+    }
+    if (b.hasAttribute('data-logout')) { logout(); STATE = null; ui.loginError = ''; render(); return; }
     if (b.hasAttribute('data-reload')) { ui.error = ''; ui.loading = true; ui.edit = false; render(); loadData().then(function () { ui.loading = false; render(); B.toast('โหลดข้อมูลล่าสุดแล้ว'); }, function (er) { ui.loading = false; ui.error = 'โหลดข้อมูลไม่สำเร็จ: ' + er.message; render(); }); return; }
     if (b.dataset.tab) { ui.tab = b.dataset.tab; ui.edit = false; ui.error = ''; render(); return; }
     if (b.dataset.edit) {
