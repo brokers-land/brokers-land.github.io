@@ -25,8 +25,8 @@
 
 เว็บแบบเดียวกับที่ใช้ GitHub Pages ฟรี ข้อมูลประกาศเก็บใน `docs/data/site.json` และรูปใน `docs/uploads/`
 
-- หน้าเว็บ: `https://<ชื่อบัญชี>.github.io/Brokers-Land/`
-- หน้าผู้ดูแล: `https://<ชื่อบัญชี>.github.io/Brokers-Land/admin.html`
+- หน้าเว็บ: https://brokers-land.github.io/
+- หน้าผู้ดูแล: https://brokers-land.github.io/admin.html
 
 **เปิดใช้งาน**
 1. หน้า admin จะบันทึกลง branch หลักของ repo เอง (ถ้าต้องการ branch อื่น แก้ `branch` ใน `docs/config.js`)
@@ -35,7 +35,7 @@
 
 **เข้าหน้าผู้ดูแล** ต้องใช้ GitHub Token (ทำครั้งเดียว)
 1. เปิด https://github.com/settings/personal-access-tokens/new
-2. Repository access → *Only select repositories* → `Brokers-Land`
+2. Resource owner → `brokers-land` แล้ว Repository access → *Only select repositories* → `brokers-land.github.io`
 3. Permissions → Repository permissions → **Contents: Read and write**
 4. Generate token แล้วนำไปวางในหน้า `admin.html`
 

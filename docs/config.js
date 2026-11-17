@@ -1,7 +1,7 @@
 // ตั้งค่าที่เก็บข้อมูลของเว็บ (หน้า admin ใช้บันทึกข้อมูลลง GitHub)
 window.BL_CONFIG = {
-  owner: 'pramvit18-glitch',      // ชื่อบัญชี GitHub (ใช้เมื่อเปิดผ่านโดเมนของตัวเอง)
-  repo: 'Brokers-Land',           // ชื่อ repository (ใช้เมื่อเปิดผ่านโดเมนของตัวเอง)
+  owner: 'brokers-land',          // ชื่อบัญชี GitHub (ใช้เมื่อเปิดผ่านโดเมนของตัวเอง)
+  repo: 'brokers-land.github.io', // ชื่อ repository (ใช้เมื่อเปิดผ่านโดเมนของตัวเอง)
   branch: '',                     // branch ที่เปิด GitHub Pages ('' = ใช้ branch หลักของ repo)
   dir: 'docs'                     // โฟลเดอร์ของเว็บใน repository
 };
