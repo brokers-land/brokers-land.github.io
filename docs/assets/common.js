@@ -70,7 +70,8 @@
     if (S.address) items.push(esc(S.address));
     if (safeHttps(S.facebook)) items.push('<a href="' + esc(S.facebook) + '" target="_blank" rel="noopener">Facebook</a>');
     return '<footer><div class="wrap"><div><h3>' + esc(S.siteName) + '</h3><p>' + esc(S.about) + '</p></div>' +
-      '<div><h3>ติดต่อ</h3><ul>' + items.map(function (i) { return '<li>' + i + '</li>'; }).join('') + '</ul></div></div></footer>';
+      '<div><h3>ติดต่อ</h3><ul>' + items.map(function (i) { return '<li>' + i + '</li>'; }).join('') + '</ul>' +
+      '<p style="margin-top:14px;font-size:.85rem"><a href="admin.html">สำหรับผู้ดูแล</a></p></div></div></footer>';
   }
 
   function toast(msg) {
